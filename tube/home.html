@@ -875,11 +875,28 @@
                     break;
 
                 case 'education':
-                    // YouTube Education版
+                    // YouTube Education版 - 高度な埋め込み設定
                     player.outerHTML = '<iframe id="player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>';
                     qualityControls.style.display = 'none';
-                    document.getElementById('player').src = `https://www.youtube.com/embed/${currentVideoId}?autoplay=1&modestbranding=1&rel=0`;
-                    streamUrl.textContent = `Education URL: https://www.youtube.com/watch?v=${currentVideoId}`;
+                    
+                    // Education用の詳細パラメータ
+                    const eduParams = new URLSearchParams({
+                        autoplay: '1',
+                        mute: '0',
+                        controls: '1',
+                        start: '0',
+                        playsinline: '1',
+                        showinfo: '0',
+                        rel: '0',
+                        iv_load_policy: '3',
+                        modestbranding: '1',
+                        fs: '1',
+                        cc_load_policy: '1',
+                        enablejsapi: '1'
+                    });
+                    
+                    document.getElementById('player').src = `https://www.youtube.com/embed/${currentVideoId}?${eduParams.toString()}`;
+                    streamUrl.textContent = `Education URL: https://www.youtube.com/watch?v=${currentVideoId} (教育向け最適化設定)`;
                     break;
             }
         }
