@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Send, Users, MessageCircle } from 'lucide-react';
+import { Send, Users, MessageCircle, Moon, Sun } from 'lucide-react';
 
 export default function OpenChat() {
   const [messages, setMessages] = useState([]);
@@ -7,6 +7,7 @@ export default function OpenChat() {
   const [username, setUsername] = useState('');
   const [isUsernameSet, setIsUsernameSet] = useState(false);
   const [onlineUsers, setOnlineUsers] = useState(1);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const messagesEndRef = useRef(null);
   const wsRef = useRef(null);
   const userIdRef = useRef('user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
@@ -149,20 +150,26 @@ export default function OpenChat() {
 
   if (!isUsernameSet) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'} flex items-center justify-center p-4`}>
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-2xl shadow-xl p-8 w-full max-w-md relative`}>
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            className={`absolute top-4 right-4 p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-700'} hover:opacity-80 transition-all`}
+          >
+            {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+          </button>
           <div className="flex items-center justify-center mb-6">
-            <MessageCircle className="w-12 h-12 text-indigo-600" />
+            <MessageCircle className={`w-12 h-12 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
           </div>
-          <h1 className="text-3xl font-bold text-center text-gray-800 mb-2">オープンチャット</h1>
-          <p className="text-center text-gray-600 mb-8">ユーザー名を入力して参加</p>
+          <h1 className={`text-3xl font-bold text-center ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-2`}>オープンチャット</h1>
+          <p className={`text-center ${isDarkMode ? 'text-gray-400' : 'text-gray-600'} mb-8`}>ユーザー名を入力して参加</p>
           <input
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             onKeyPress={(e) => handleKeyPress(e, handleSetUsername)}
             placeholder="ユーザー名を入力"
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500 mb-4"
+            className={`w-full px-4 py-3 border-2 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'} rounded-lg focus:outline-none focus:border-indigo-500 mb-4`}
             maxLength={20}
           />
           <button
@@ -177,38 +184,46 @@ export default function OpenChat() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className={`min-h-screen ${isDarkMode ? 'bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-100'}`}>
       <div className="container mx-auto h-screen flex flex-col p-4">
-        <div className="bg-white rounded-t-2xl shadow-lg p-4 flex items-center justify-between">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-t-2xl shadow-lg p-4 flex items-center justify-between`}>
           <div className="flex items-center gap-3">
-            <MessageCircle className="w-8 h-8 text-indigo-600" />
+            <MessageCircle className={`w-8 h-8 ${isDarkMode ? 'text-indigo-400' : 'text-indigo-600'}`} />
             <div>
-              <h1 className="text-2xl font-bold text-gray-800">オープンチャット</h1>
-              <p className="text-sm text-gray-500">リアルタイムで会話しましょう</p>
+              <h1 className={`text-2xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>オープンチャット</h1>
+              <p className={`text-sm ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>リアルタイムで会話しましょう</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full">
-            <Users className="w-5 h-5 text-green-600" />
-            <span className="text-green-700 font-semibold">{onlineUsers}</span>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsDarkMode(!isDarkMode)}
+              className={`p-2 rounded-lg ${isDarkMode ? 'bg-gray-700 text-yellow-400' : 'bg-gray-100 text-gray-700'} hover:opacity-80 transition-all`}
+            >
+              {isDarkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+            </button>
+            <div className="flex items-center gap-2 bg-green-100 px-4 py-2 rounded-full">
+              <Users className="w-5 h-5 text-green-600" />
+              <span className="text-green-700 font-semibold">{onlineUsers}</span>
+            </div>
           </div>
         </div>
 
-        <div className="flex-1 bg-white p-6 overflow-y-auto shadow-lg">
+        <div className={`flex-1 ${isDarkMode ? 'bg-gray-800' : 'bg-white'} p-6 overflow-y-auto shadow-lg`}>
           <div className="space-y-4">
             {messages.map((msg) => (
               <div key={msg.id} className={msg.isSystem ? 'flex justify-center' : ''}>
                 {msg.isSystem ? (
-                  <div className="bg-gray-200 text-gray-600 px-4 py-2 rounded-full text-sm">
+                  <div className={`${isDarkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-600'} px-4 py-2 rounded-full text-sm`}>
                     {msg.text}
                   </div>
                 ) : (
                   <div className={`flex ${msg.user === username ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-xs lg:max-w-md ${msg.user === username ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-800'} rounded-2xl px-4 py-3`}>
+                    <div className={`max-w-xs lg:max-w-md ${msg.user === username ? 'bg-indigo-600 text-white' : isDarkMode ? 'bg-gray-700 text-gray-100' : 'bg-gray-200 text-gray-800'} rounded-2xl px-4 py-3`}>
                       {msg.user !== username && (
                         <div className="text-xs font-semibold mb-1 opacity-70">{msg.user}</div>
                       )}
                       <div className="break-words">{msg.text}</div>
-                      <div className={`text-xs mt-1 ${msg.user === username ? 'text-indigo-200' : 'text-gray-500'}`}>
+                      <div className={`text-xs mt-1 ${msg.user === username ? 'text-indigo-200' : isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                         {msg.time}
                       </div>
                     </div>
@@ -220,7 +235,7 @@ export default function OpenChat() {
           </div>
         </div>
 
-        <div className="bg-white rounded-b-2xl shadow-lg p-4">
+        <div className={`${isDarkMode ? 'bg-gray-800' : 'bg-white'} rounded-b-2xl shadow-lg p-4`}>
           <div className="flex gap-2">
             <input
               type="text"
@@ -228,7 +243,7 @@ export default function OpenChat() {
               onChange={(e) => setInputText(e.target.value)}
               onKeyPress={(e) => handleKeyPress(e, handleSendMessage)}
               placeholder="メッセージを入力..."
-              className="flex-1 px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-indigo-500"
+              className={`flex-1 px-4 py-3 border-2 ${isDarkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white border-gray-300 text-gray-800'} rounded-lg focus:outline-none focus:border-indigo-500`}
             />
             <button
               onClick={handleSendMessage}
