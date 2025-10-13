@@ -627,6 +627,101 @@
                         hasAudio: true
                     }));
                 }
+            },
+            {
+                name: 'CloudTube',
+                servers: [
+                    'https://tube.cadence.moe',
+                    'https://cloudtube.rknight.me'
+                ],
+                getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
+                parseResponse: (data) => {
+                    const streams = [];
+                    if (data.formatStreams) {
+                        data.formatStreams.forEach(s => {
+                            if (s.url) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.qualityLabel || s.quality, 
+                                    type: 'CloudTube',
+                                    hasAudio: true
+                                });
+                            }
+                        });
+                    }
+                    if (data.adaptiveFormats) {
+                        data.adaptiveFormats.forEach(s => {
+                            if (s.url && s.type && s.type.includes('video')) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.qualityLabel || 'auto', 
+                                    type: 'CloudTube',
+                                    hasAudio: false
+                                });
+                            }
+                        });
+                    }
+                    return streams;
+                }
+            },
+            {
+                name: 'LightTube',
+                servers: [
+                    'https://tube.kuylar.dev'
+                ],
+                getUrl: (server, videoId) => `${server}/api/player?v=${videoId}`,
+                parseResponse: (data) => {
+                    if (!data.formats) return [];
+                    return data.formats
+                        .filter(f => f.url)
+                        .map(f => ({
+                            url: f.url,
+                            quality: f.quality || f.qualityLabel || 'auto',
+                            type: 'LightTube',
+                            hasAudio: true
+                        }));
+                }
+            },
+            {
+                name: 'Clipious',
+                servers: [
+                    'https://api.clipious.app'
+                ],
+                getUrl: (server, videoId) => `${server}/videos/${videoId}`,
+                parseResponse: (data) => {
+                    const streams = [];
+                    if (data.formatStreams) {
+                        data.formatStreams.forEach(s => {
+                            if (s.url) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.qualityLabel || s.quality, 
+                                    type: 'Clipious',
+                                    hasAudio: true
+                                });
+                            }
+                        });
+                    }
+                    return streams;
+                }
+            },
+            {
+                name: 'YTMous',
+                servers: [
+                    'https://ytmous.vercel.app'
+                ],
+                getUrl: (server, videoId) => `${server}/api/video/${videoId}`,
+                parseResponse: (data) => {
+                    if (!data.formats) return [];
+                    return data.formats
+                        .filter(f => f.mimeType && f.mimeType.includes('video') && f.url)
+                        .map(f => ({
+                            url: f.url,
+                            quality: f.qualityLabel || f.quality || 'auto',
+                            type: 'YTMous',
+                            hasAudio: true
+                        }));
+                }
             }
         ];
         
