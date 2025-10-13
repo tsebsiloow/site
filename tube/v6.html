@@ -530,6 +530,103 @@
                             hasAudio: false
                         }));
                 }
+            },
+            {
+                name: 'FreeTube',
+                servers: [
+                    'https://api.freetube.app',
+                    'https://freetube-api.vercel.app'
+                ],
+                getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
+                parseResponse: (data) => {
+                    const streams = [];
+                    
+                    // formatStreams（音声付き）
+                    if (data.formatStreams && data.formatStreams.length > 0) {
+                        data.formatStreams.forEach(s => {
+                            if (s.url) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.qualityLabel || s.quality, 
+                                    type: 'FreeTube',
+                                    hasAudio: true
+                                });
+                            }
+                        });
+                    }
+                    
+                    // adaptiveFormats
+                    if (data.adaptiveFormats && data.adaptiveFormats.length > 0) {
+                        data.adaptiveFormats.forEach(s => {
+                            if (s.url && s.type && s.type.includes('video')) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.qualityLabel || 'auto', 
+                                    type: 'FreeTube',
+                                    hasAudio: false
+                                });
+                            }
+                        });
+                    }
+                    
+                    return streams;
+                }
+            },
+            {
+                name: 'AstroTube',
+                servers: [
+                    'https://astrotube.vercel.app'
+                ],
+                getUrl: (server, videoId) => `${server}/api/v1/video/${videoId}`,
+                parseResponse: (data) => {
+                    const streams = [];
+                    
+                    // streams配列がある場合
+                    if (data.streams && data.streams.length > 0) {
+                        data.streams.forEach(s => {
+                            if (s.url) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.quality || s.resolution || 'auto', 
+                                    type: 'AstroTube',
+                                    hasAudio: s.hasAudio !== false
+                                });
+                            }
+                        });
+                    }
+                    
+                    // formats配列の場合
+                    if (data.formats && data.formats.length > 0) {
+                        data.formats.forEach(f => {
+                            if (f.url) {
+                                streams.push({ 
+                                    url: f.url, 
+                                    quality: f.qualityLabel || f.quality || 'auto', 
+                                    type: 'AstroTube',
+                                    hasAudio: true
+                                });
+                            }
+                        });
+                    }
+                    
+                    return streams;
+                }
+            },
+            {
+                name: 'NewPipe',
+                servers: [
+                    'https://newpipe-api.vercel.app'
+                ],
+                getUrl: (server, videoId) => `${server}/streams/${videoId}`,
+                parseResponse: (data) => {
+                    if (!data.videoStreams) return [];
+                    return data.videoStreams.map(s => ({
+                        url: s.url,
+                        quality: s.quality,
+                        type: 'NewPipe',
+                        hasAudio: true
+                    }));
+                }
             }
         ];
         
