@@ -81,7 +81,7 @@
     const p = document.getElementById('password').value;
     if (u === VALID_USER.username && p === VALID_USER.password) {
       sessionStorage.setItem('isLoggedIn', 'true');
-      location.href = 'proxy.html';  // 認証OKならプロキシ画面へ移動
+      location.href = '/proxysite/home';  // 認証OKならプロキシ画面へ移動
     } else {
       loginError.textContent = 'ユーザー名かパスワードが違います';
     }
@@ -90,7 +90,7 @@
   // ログイン済みなら自動的にプロキシ画面へ
   window.onload = () => {
     if (sessionStorage.getItem('isLoggedIn') === 'true') {
-      location.href = 'proxy.html';
+      location.href = '/proxysite/home';
     }
   };
 </script>
