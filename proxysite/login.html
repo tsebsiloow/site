@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ログイン</title>
+<style>
+  body {
+    background: #3b1f5f; /* 青紫 */
+    color: #d18b3d; /* 落ち着いたオレンジ */
+    font-family: 'Roboto Mono', monospace;
+    padding: 2rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+  h2 {
+    color: #c99446;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0 0.2rem;
+  }
+  input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    border: 1px solid #ff6fbf;
+    background: #5b3ea0;
+    color: #d18b3d;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  input[type="text"]:focus, input[type="password"]:focus {
+    border-color: #ff8ac1;
+    outline: none;
+  }
+  button {
+    background: #9b2473; /* 赤紫 */
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    color: #f3eaff;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 1rem;
+    width: 100%;
+  }
+  button:hover {
+    background: #7a1a56;
+  }
+  #loginError {
+    color: #ff6666;
+    margin-top: 0.5rem;
+  }
+  .container {
+    max-width: 400px;
+    margin: auto;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h2>ログイン</h2>
+    <label for="username">ユーザー名</label>
+    <input id="username" type="text" autocomplete="username" />
+    <label for="password">パスワード</label>
+    <input id="password" type="password" autocomplete="current-password" />
+    <button id="loginBtn">ログイン</button>
+    <p id="loginError"></p>
+  </div>
+
+<script>
+  const VALID_USER = {username: 'woolisbest', password: 'miyosi-haruka'};
+  const loginBtn = document.getElementById('loginBtn');
+  const loginError = document.getElementById('loginError');
+
+  loginBtn.addEventListener('click', () => {
+    const u = document.getElementById('username').value.trim();
+    const p = document.getElementById('password').value;
+    if (u === VALID_USER.username && p === VALID_USER.password) {
+      sessionStorage.setItem('isLoggedIn', 'true');
+      location.href = 'proxy.html';  // 認証OKならプロキシ画面へ移動
+    } else {
+      loginError.textContent = 'ユーザー名かパスワードが違います';
+    }
+  });
+
+  // ログイン済みなら自動的にプロキシ画面へ
+  window.onload = () => {
+    if (sessionStorage.getItem('isLoggedIn') === 'true') {
+      location.href = 'proxy.html';
+    }
+  };
+</script>
+</body>
+</html>
