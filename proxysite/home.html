@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>プロキシ</title>
+<style>
+  body {
+    background: #3b1f5f; /* 青紫 */
+    color: #d18b3d; /* 落ち着いたオレンジ */
+    font-family: 'Roboto Mono', monospace;
+    padding: 2rem;
+    min-height: 100vh;
+    box-sizing: border-box;
+  }
+  h2 {
+    color: #c99446;
+    letter-spacing: 2px;
+    margin-bottom: 1rem;
+  }
+  label {
+    display: block;
+    margin: 0.5rem 0 0.2rem;
+  }
+  input[type="text"], select {
+    width: 100%;
+    padding: 0.5rem 1rem;
+    border-radius: 5px;
+    border: 1px solid #ff6fbf;
+    background: #5b3ea0;
+    color: #d18b3d;
+    font-size: 1rem;
+    box-sizing: border-box;
+  }
+  input[type="text"]:focus, select:focus {
+    border-color: #ff8ac1;
+    outline: none;
+  }
+  button {
+    background: #9b2473; /* 赤紫 */
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 5px;
+    color: #f3eaff;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 1rem;
+    width: 100%;
+  }
+  button:hover {
+    background: #7a1a56;
+  }
+  #response {
+    background: #4a297d;
+    border-radius: 5px;
+    padding: 1rem;
+    margin-top: 1rem;
+    white-space: pre-wrap;
+    max-height: 300px;
+    overflow-y: auto;
+    border: 2px solid #ff6fbf;
+  }
+  #history {
+    margin-top: 1.5rem;
+    border: 2px solid #ff6fbf;
+    border-radius: 5px;
+    background: #4a297d;
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+  #history h3 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    color: #ff6fbf;
+    letter-spacing: 1.5px;
+  }
+  .history-item {
+    padding: 0.5rem;
+    border-bottom: 1px solid #7f4fa2;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  .history-item:hover {
+    background-color: #69318b;
+  }
+  .history-item:last-child {
+    border-bottom: none;
+  }
+  .small-text {
+    font-size: 0.8rem;
+    color: #c99446;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .container {
+    max-width: 700px;
+    margin: auto;
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h2>プロキシ</h2>
+
+    <label for="method">HTTPメソッド</label>
+    <select id="method">
+      <option>GET</option>
+      <option>POST</option>
+      <option>PUT</option>
+      <option>DELETE</option>
+      <option>PATCH</option>
+    </select>
+
+    <label for="target">リクエストURL</label>
+    <input id="target" type="text" placeholder="https://example.com/api" list="commonUrls" />
+    <datalist id="commonUrls">
+      <option value="https://jsonplaceholder.typicode.com/posts/1"></option>
+      <option value="https://api.github.com/repos/octocat/hello-world"></option>
+      <option value="https://httpbin.org/get"></option>
+      <option value="https://httpbin.org/post"></option>
+    </datalist>
+
+    <button id="send">送信</button>
+    <button id="logoutBtn" style="background:#ff3399; margin-top: 0.5rem;">ログアウト</button>
+
+    <pre id="response">ここにレスポンスが表示されます。</pre>
+
+    <div id="history">
+      <h3>送信履歴</h3>
+      <div id="historyList">履歴はありません</div>
+    </div>
+  </div>
+
+<script>
+  if (sessionStorage.getItem('isLoggedIn') !== 'true') {
+    alert('ログインしてください');
+    location.href = 'login.html';
+  }
+
+  const STORAGE_KEY = 'proxyHistory';
+
+  function loadHistory() {
+    const historyJSON = localStorage.getItem(STORAGE_KEY);
+    return historyJSON ? JSON.parse(historyJSON) : [];
+  }
+
+  function saveHistory(history) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+  }
+
+  function addHistoryItem(item) {
+    let history = loadHistory();
+
+    history = history.filter(h => !(h.url === item.url && h.method === item.method));
+
+    history.unshift(item);
+    if (history.length > 20) history.pop();
+
+    saveHistory(history);
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const history = loadHistory();
+    const container = document.getElementById('historyList');
+    container.innerHTML = '';
+    if(history.length === 0){
+      container.textContent = '履歴はありません';
+      return;
+    }
+    history.forEach((item) => {
+      const div = document.createElement('div');
+      div.className = 'history-item';
+      div.title = `URL: ${item.url}\nメソッド: ${item.method}`;
+      div.innerHTML = `<strong>[${item.method}]</strong> <span class="small-text">${item.url}</span>`;
+      div.addEventListener('click', () => {
+        document.getElementById('method').value = item.method;
+        document.getElementById('target').value = item.url;
+      });
+      container.appendChild(div);
+    });
+  }
+
+  async function sendRequest() {
+    const method = document.getElementById('method').value;
+    const url = document.getElementById('target').value.trim();
+    const responseElem = document.getElementById('response');
+
+    if (!url) {
+      alert('URLを入力してください');
+      return;
+    }
+
+    let options = { method };
+
+    // GET以外は空のbodyを送る（必要に応じてカスタマイズしてください）
+    if (method !== 'GET') {
+      options.body = '';
+    }
+
+    responseElem.textContent = '読み込み中...';
+
+    try {
+      const proxyUrl = '/proxy';
+
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({url, options})
+      });
+
+      if (!res.ok) {
+        responseElem.textContent = `エラー: ${res.status} ${res.statusText}`;
+        return;
+      }
+
+      const contentType = res.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        responseElem.textContent = JSON.stringify(data, null, 2);
+      } else {
+        const text = await res.text();
+        responseElem.textContent = text;
+      }
+
+      addHistoryItem({url, method});
+    } catch (error) {
+      responseElem.textContent = `通信エラー: ${error.message}`;
+    }
+  }
+
+  document.getElementById('send').addEventListener('click', sendRequest);
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    sessionStorage.removeItem('isLoggedIn');
+    location.href = 'login.html';
+  });
+
+  window.onload = () => {
+    renderHistory();
+  };
+</script>
+</body>
+</html>
