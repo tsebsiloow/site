@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>マルチサーチ - 97の検索エンジン</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #581c87 50%, #312e81 100%);
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin: 2rem 0 3rem;
+        }
+
+        h1 {
+            font-size: 3.5rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            font-size: 1.25rem;
+            color: #d1d5db;
+        }
+
+        .search-box {
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+
+        .search-input-wrapper {
+            display: flex;
+            background: white;
+            border-radius: 50px;
+            overflow: hidden;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 1.25rem 1.5rem;
+            border: none;
+            font-size: 1.125rem;
+            outline: none;
+        }
+
+        .search-button {
+            padding: 1.25rem 2.5rem;
+            background: linear-gradient(to right, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .search-button:hover {
+            background: linear-gradient(to right, #4338ca, #6d28d9);
+        }
+
+        .search-button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .category-filter {
+            max-width: 1200px;
+            margin: 0 auto 2rem;
+        }
+
+        .filter-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .category-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .category-button {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            border: none;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .category-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .category-button.active {
+            background: white;
+            color: #312e81;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .results-info {
+            max-width: 1400px;
+            margin: 0 auto 1.5rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+        }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.75rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        @media (min-width: 768px) {
+            .results-grid {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .results-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+
+        @media (min-width: 1280px) {
+            .results-grid {
+                grid-template-columns: repeat(6, 1fr);
+            }
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 0.5rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            text-decoration: none;
+            display: block;
+        }
+
+        .result-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-header {
+            height: 4px;
+        }
+
+        .result-content {
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .result-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-title {
+            font-size: 0.875rem;
+            font-weight: bold;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .result-card:hover .result-title {
+            color: #4f46e5;
+        }
+
+        .welcome-box {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 3rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .welcome-icon {
+            font-size: 5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .welcome-text {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-icons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            font-size: 2rem;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>マルチサーチ</h1>
+            <p class="subtitle" id="subtitle">97個の検索エンジンで一度に検索</p>
+        </header>
+
+        <div class="search-box">
+            <div class="search-input-wrapper">
+                <input 
+                    type="text" 
+                    class="search-input" 
+                    id="searchInput"
+                    placeholder="何でも検索..."
+                    autocomplete="off"
+                >
+                <button class="search-button" id="searchButton">
+                    <span id="searchIcon">🔍</span>
+                    検索
+                </button>
+            </div>
+        </div>
+
+        <div class="category-filter">
+            <div class="filter-label">
+                <span>📁</span>
+                <span>カテゴリ:</span>
+            </div>
+            <div class="category-buttons" id="categoryButtons"></div>
+        </div>
+
+        <div id="resultsInfo" class="results-info hidden"></div>
+        <div id="resultsGrid" class="results-grid"></div>
+
+        <div id="welcomeBox" class="welcome-box">
+            <div class="welcome-icon">🔍</div>
+            <p class="welcome-text">
+                キーワードを入力して、97個の検索エンジンを一度に検索
+            </p>
+            <div class="welcome-icons">
+                <span>🔍</span>
+                <span>🦆</span>
+                <span>▶️</span>
+                <span>📖</span>
+                <span>🛒</span>
+                <span>💻</span>
+                <span>📰</span>
+                <span>🖼️</span>
+                <span>🎵</span>
+                <span>🗺️</span>
+                <span>🍽️</span>
+                <span>💰</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const searchEngines = [
+            {title:'Google',url:'https://www.google.com/search?q=',icon:'🔍',color:'linear-gradient(to right,#3b82f6,#2563eb)',category:'general'},
+            {title:'DuckDuckGo',url:'https://duckduckgo.com/?q=',icon:'🦆',color:'linear-gradient(to right,#f97316,#ef4444)',category:'general'},
+            {title:'Bing',url:'https://www.bing.com/search?q=',icon:'🅱️',color:'linear-gradient(to right,#06b6d4,#3b82f6)',category:'general'},
+            {title:'Yahoo! JAPAN',url:'https://search.yahoo.co.jp/search?p=',icon:'🇯🇵',color:'linear-gradient(to right,#dc2626,#9333ea)',category:'general'},
+            {title:'Brave Search',url:'https://search.brave.com/search?q=',icon:'🦁',color:'linear-gradient(to right,#ea580c,#dc2626)',category:'general'},
+            {title:'Startpage',url:'https://www.startpage.com/do/search?q=',icon:'🔐',color:'linear-gradient(to right,#2563eb,#4f46e5)',category:'general'},
+            {title:'Ecosia',url:'https://www.ecosia.org/search?q=',icon:'🌳',color:'linear-gradient(to right,#059669,#10b981)',category:'general'},
+            {title:'Yandex',url:'https://yandex.com/search/?text=',icon:'🔴',color:'linear-gradient(to right,#ef4444,#b91c1c)',category:'general'},
+            {title:'Baidu',url:'https://www.baidu.com/s?wd=',icon:'🐾',color:'linear-gradient(to right,#2563eb,#1e40af)',category:'general'},
+            {title:'Naver',url:'https://search.naver.com/search.naver?query=',icon:'🇰🇷',color:'linear-gradient(to right,#22c55e,#16a34a)',category:'general'},
+            {title:'Qwant',url:'https://www.qwant.com/?q=',icon:'🔵',color:'linear-gradient(to right,#3b82f6,#4f46e5)',category:'general'},
+            {title:'Mojeek',url:'https://www.mojeek.com/search?q=',icon:'🟣',color:'linear-gradient(to right,#a855f7,#7c3aed)',category:'general'},
+            {title:'YouTube',url:'https://www.youtube.com/results?search_query=',icon:'▶️',color:'linear-gradient(to right,#ef4444,#dc2626)',category:'video'},
+            {title:'ニコニコ動画',url:'https://www.nicovideo.jp/search/',icon:'📺',color:'linear-gradient(to right,#374151,#1f2937)',category:'video'},
+            {title:'TikTok',url:'https://www.tiktok.com/search?q=',icon:'🎵',color:'linear-gradient(to right,#000000,#db2777)',category:'video'},
+            {title:'Twitch',url:'https://www.twitch.tv/search?term=',icon:'🎮',color:'linear-gradient(to right,#7c3aed,#6d28d9)',category:'video'},
+            {title:'Vimeo',url:'https://vimeo.com/search?q=',icon:'🎬',color:'linear-gradient(to right,#60a5fa,#2563eb)',category:'video'},
+            {title:'Dailymotion',url:'https://www.dailymotion.com/search/',icon:'🎞️',color:'linear-gradient(to right,#3b82f6,#1d4ed8)',category:'video'},
+            {title:'Bilibili',url:'https://search.bilibili.com/all?keyword=',icon:'📹',color:'linear-gradient(to right,#f472b6,#3b82f6)',category:'video'},
+            {title:'Twitter/X',url:'https://twitter.com/search?q=',icon:'🐦',color:'linear-gradient(to right,#38bdf8,#3b82f6)',category:'social'},
+            {title:'Reddit',url:'https://www.reddit.com/search/?q=',icon:'🤖',color:'linear-gradient(to right,#ea580c,#dc2626)',category:'social'},
+            {title:'Instagram',url:'https://www.instagram.com/explore/tags/',icon:'📷',color:'linear-gradient(to right,#a855f7,#ec4899)',category:'social'},
+            {title:'Facebook',url:'https://www.facebook.com/search/top?q=',icon:'👥',color:'linear-gradient(to right,#2563eb,#1d4ed8)',category:'social'},
+            {title:'LinkedIn',url:'https://www.linkedin.com/search/results/all/?keywords=',icon:'💼',color:'linear-gradient(to right,#1e40af,#1e3a8a)',category:'social'},
+            {title:'Mastodon',url:'https://mastodon.social/search?q=',icon:'🐘',color:'linear-gradient(to right,#7c3aed,#4f46e5)',category:'social'},
+            {title:'Discord',url:'https://discord.com/search?query=',icon:'💬',color:'linear-gradient(to right,#6366f1,#4f46e5)',category:'social'},
+            {title:'Threads',url:'https://www.threads.net/search?q=',icon:'🧵',color:'linear-gradient(to right,#000000,#374151)',category:'social'},
+            {title:'GitHub',url:'https://github.com/search?q=',icon:'💻',color:'linear-gradient(to right,#374151,#1f2937)',category:'dev'},
+            {title:'Stack Overflow',url:'https://stackoverflow.com/search?q=',icon:'💡',color:'linear-gradient(to right,#f97316,#eab308)',category:'dev'},
+            {title:'Qiita',url:'https://qiita.com/search?q=',icon:'📝',color:'linear-gradient(to right,#059669,#10b981)',category:'dev'},
+            {title:'Zenn',url:'https://zenn.dev/search?q=',icon:'⚡',color:'linear-gradient(to right,#60a5fa,#2563eb)',category:'dev'},
+            {title:'GitLab',url:'https://gitlab.com/search?search=',icon:'🦊',color:'linear-gradient(to right,#ea580c,#dc2626)',category:'dev'},
+            {title:'Bitbucket',url:'https://bitbucket.org/search?q=',icon:'🪣',color:'linear-gradient(to right,#2563eb,#1e40af)',category:'dev'},
+            {title:'NPM',url:'https://www.npmjs.com/search?q=',icon:'📦',color:'linear-gradient(to right,#dc2626,#b91c1c)',category:'dev'},
+            {title:'PyPI',url:'https://pypi.org/search/?q=',icon:'🐍',color:'linear-gradient(to right,#3b82f6,#eab308)',category:'dev'},
+            {title:'Docker Hub',url:'https://hub.docker.com/search?q=',icon:'🐳',color:'linear-gradient(to right,#3b82f6,#1d4ed8)',category:'dev'},
+            {title:'Googleニュース',url:'https://www.google.com/search?q=',icon:'📰',color:'linear-gradient(to right,#2563eb,#4f46e5)',category:'news',extra:'&tbm=nws'},
+            {title:'Yahoo!ニュース',url:'https://news.yahoo.co.jp/search?p=',icon:'📱',color:'linear-gradient(to right,#7c3aed,#dc2626)',category:'news'},
+            {title:'はてなブックマーク',url:'https://b.hatena.ne.jp/search/text?q=',icon:'📑',color:'linear-gradient(to right,#2563eb,#1d4ed8)',category:'news'},
+            {title:'note',url:'https://note.com/search?q=',icon:'✍️',color:'linear-gradient(to right,#22c55e,#10b981)',category:'news'},
+            {title:'Medium',url:'https://medium.com/search?q=',icon:'📄',color:'linear-gradient(to right,#000000,#374151)',category:'news'},
+            {title:'NewsPicks',url:'https://newspicks.com/search?q=',icon:'📊',color:'linear-gradient(to right,#3b82f6,#1d4ed8)',category:'news'},
+            {title:'Google画像',url:'https://www.google.com/search?q=',icon:'🖼️',color:'linear-gradient(to right,#22c55e,#14b8a6)',category:'image',extra:'&tbm=isch'},
+            {title:'Pinterest',url:'https://www.pinterest.com/search/pins/?q=',icon:'📌',color:'linear-gradient(to right,#ef4444,#ec4899)',category:'image'},
+            {title:'Unsplash',url:'https://unsplash.com/s/photos/',icon:'📸',color:'linear-gradient(to right,#374151,#1f2937)',category:'image'},
+            {title:'Pixabay',url:'https://pixabay.com/images/search/',icon:'🎨',color:'linear-gradient(to right,#22c55e,#3b82f6)',category:'image'},
+            {title:'Flickr',url:'https://www.flickr.com/search/?text=',icon:'📷',color:'linear-gradient(to right,#ec4899,#3b82f6)',category:'image'},
+            {title:'DeviantArt',url:'https://www.deviantart.com/search?q=',icon:'🎭',color:'linear-gradient(to right,#059669,#047857)',category:'image'},
+            {title:'Behance',url:'https://www.behance.net/search/projects?search=',icon:'🎨',color:'linear-gradient(to right,#2563eb,#1e40af)',category:'image'},
+            {title:'Dribbble',url:'https://dribbble.com/search/',icon:'🏀',color:'linear-gradient(to right,#ec4899,#db2777)',category:'image'},
+            {title:'Spotify',url:'https://open.spotify.com/search/',icon:'🎧',color:'linear-gradient(to right,#22c55e,#16a34a)',category:'music'},
+            {title:'Apple Music',url:'https://music.apple.com/jp/search?term=',icon:'🎵',color:'linear-gradient(to right,#ef4444,#ec4899)',category:'music'},
+            {title:'SoundCloud',url:'https://soundcloud.com/search?q=',icon:'🔊',color:'linear-gradient(to right,#f97316,#ea580c)',category:'music'},
+            {title:'YouTube Music',url:'https://music.youtube.com/search?q=',icon:'🎶',color:'linear-gradient(to right,#dc2626,#b91c1c)',category:'music'},
+            {title:'Bandcamp',url:'https://bandcamp.com/search?q=',icon:'🎸',color:'linear-gradient(to right,#0891b2,#2563eb)',category:'music'},
+            {title:'Last.fm',url:'https://www.last.fm/search?q=',icon:'📻',color:'linear-gradient(to right,#dc2626,#991b1b)',category:'music'},
+            {title:'Amazon JP',url:'https://www.amazon.co.jp/s?k=',icon:'🛒',color:'linear-gradient(to right,#eab308,#f97316)',category:'shopping'},
+            {title:'楽天市場',url:'https://search.rakuten.co.jp/search/mall/',icon:'🏪',color:'linear-gradient(to right,#dc2626,#ec4899)',category:'shopping'},
+            {title:'Yahoo!ショッピング',url:'https://shopping.yahoo.co.jp/search?p=',icon:'🛍️',color:'linear-gradient(to right,#ef4444,#7c3aed)',category:'shopping'},
+            {title:'メルカリ',url:'https://jp.mercari.com/search?keyword=',icon:'💼',color:'linear-gradient(to right,#ef4444,#dc2626)',category:'shopping'},
+            {title:'価格.com',url:'https://s.kakaku.com/search/resultslist.aspx?query=',icon:'💰',color:'linear-gradient(to right,#059669,#14b8a6)',category:'shopping'},
+            {title:'ヨドバシ.com',url:'https://www.yodobashi.com/?word=',icon:'🏬',color:'linear-gradient(to right,#dc2626,#b91c1c)',category:'shopping'},
+            {title:'eBay',url:'https://www.ebay.com/sch/i.html?_nkw=',icon:'🌐',color:'linear-gradient(to right,#2563eb,#eab308)',category:'shopping'},
+            {title:'Etsy',url:'https://www.etsy.com/search?q=',icon:'🎁',color:'linear-gradient(to right,#f97316,#ea580c)',category:'shopping'},
+            {title:'Wikipedia',url:'https://ja.wikipedia.org/wiki/',icon:'📖',color:'linear-gradient(to right,#4b5563,#374151)',category:'knowledge'},
+            {title:'Britannica',url:'https://www.britannica.com/search?query=',icon:'📚',color:'linear-gradient(to right,#b91c1c,#991b1b)',category:'knowledge'},
+            {title:'Wiktionary',url:'https://ja.wiktionary.org/wiki/',icon:'📘',color:'linear-gradient(to right,#2563eb,#1d4ed8)',category:'knowledge'},
+            {title:'Coursera',url:'https://www.coursera.org/search?query=',icon:'🎓',color:'linear-gradient(to right,#3b82f6,#1d4ed8)',category:'knowledge'},
+            {title:'Khan Academy',url:'https://www.khanacademy.org/search?page_search_query=',icon:'🏫',color:'linear-gradient(to right,#059669,#14b8a6)',category:'knowledge'},
+            {title:'Udemy',url:'https://www.udemy.com/courses/search/?q=',icon:'📓',color:'linear-gradient(to right,#7c3aed,#6d28d9)',category:'knowledge'},
+            {title:'Google Maps',url:'https://www.google.com/maps/search/',icon:'🗺️',color:'linear-gradient(to right,#3b82f6,#22c55e)',category:'map'},
+            {title:'食べログ',url:'https://tabelog.com/rstLst/?sw=',icon:'🍽️',color:'linear-gradient(to right,#ea580c,#dc2626)',category:'map'},
+            {title:'ぐるなび',url:'https://www.gnavi.co.jp/search/rs/?fw=',icon:'🍜',color:'linear-gradient(to right,#f97316,#ea580c)',category:'map'},
+            {title:'じゃらん',url:'https://www.jalan.net/uw/uwp2000/uww2001.do?keyword=',icon:'🏨',color:'linear-gradient(to right,#3b82f6,#1d4ed8)',category:'map'},
+            {title:'トリップアドバイザー',url:'https://www.tripadvisor.jp/Search?q=',icon:'✈️',color:'linear-gradient(to right,#059669,#047857)',category:'map'},
+            {title:'Airbnb',url:'https://www.airbnb.jp/s/homes?query=',icon:'🏡',color:'linear-gradient(to right,#ef4444,#ec4899)',category:'map'},
+            {title:'Steam',url:'https://store.steampowered.com/search/?term=',icon:'🎮',color:'linear-gradient(to right,#2563eb,#1e3a8a)',category:'game'},
+            {title:'Epic Games',url:'https://store.epicgames.com/ja/browse?q=',icon:'🎯',color:'linear-gradient(to right,#1f2937,#000000)',category:'game'},
+            {title:'PlayStation Store',url:'https://store.playstation.com/ja-jp/search/',icon:'🎮',color:'linear-gradient(to right,#2563eb,#1e40af)',category:'game'},
+            {title:'Xbox Store',url:'https://www.xbox.com/ja-JP/Search?q=',icon:'🟢',color:'linear-gradient(to right,#059669,#047857)',category:'game'},
+            {title:'Nintendo eShop',url:'https://www.nintendo.co.jp/software/search.html?keyword=',icon:'🔴',color:'linear-gradient(to right,#ef4444,#b91c1c)',category:'game'},
+            {title:'GOG',url:'https://www.gog.com/games?query=',icon:'🐻',color:'linear-gradient(to right,#7c3aed,#6d28d9)',category:'game'},
+            {title:'itch.io',url:'https://itch.io/search?q=',icon:'👾',color:'linear-gradient(to right,#dc2626,#ec4899)',category:'game'},
+            {title:'Game Pass',url:'https://www.xbox.com/ja-JP/games/store/search?q=',icon:'🎮',color:'linear-gradient(to right,#22c55e,#10b981)',category:'game'},
+            {title:'Roblox',url:'https://www.roblox.com/search/games?keyword=',icon:'⬛',color:'linear-gradient(to right,#1f2937,#dc2626)',category:'game'},
+            {title:'IGN',url:'https://www.ign.com/search?q=',icon:'🕹️',color:'linear-gradient(to right,#b91c1c,#7f1d1d)',category:'game'},
+            {title:'Wayback Machine',url:'https://web.archive.org/web/*/',icon:'⏰',color:'linear-gradient(to right,#4b5563,#1f2937)',category:'other'},
+            {title:'Archive.org',url:'https://archive.org/search.php?query=',icon:'📦',color:'linear-gradient(to right,#374151,#1f2937)',category:'other'},
+            {title:'IMDB',url:'https://www.imdb.com/find?q=',icon:'🎬',color:'linear-gradient(to right,#eab308,#ca8a04)',category:'other'},
+            {title:'Goodreads',url:'https://www.goodreads.com/search?q=',icon:'📚',color:'linear-gradient(to right,#ca8a04,#ea580c)',category:'other'},
+            {title:'MyAnimeList',url:'https://myanimelist.net/search/all?q=',icon:'🎌',color:'linear-gradient(to right,#2563eb,#1e40af)',category:'other'}
+        ];
+
+        const categories = [
+            {id:'all',name:'すべて',icon:'🌐'},
+            {id:'general',name:'一般検索',icon:'🔍'},
+            {id:'video',name:'動画',icon:'▶️'},
+            {id:'social',name:'SNS',icon:'👥'},
+            {id:'dev',name:'開発',icon:'💻'},
+            {id:'news',name:'ニュース',icon:'📰'},
+            {id:'image',name:'画像',icon:'🖼️'},
+            {id:'music',name:'音楽',icon:'🎵'},
+            {id:'shopping',name:'ショッピング',icon:'🛒'},
+            {id:'knowledge',name:'学習',icon:'📚'},
+            {id:'map',name:'地図・旅行',icon:'🗺️'},
+            {id:'game',name:'ゲーム',icon:'🎮'},
+            {id:'other',name:'その他',icon:'⭐'}
+        ];
+
+        let currentCategory = 'all';
+        let isLoading = false;
+
+        function initCategories() {
+            const container = document.getElementById('categoryButtons');
+            categories.forEach(cat => {
+                const btn = document.createElement('button');
+                btn.className = 'category-button' + (cat.id === 'all' ? ' active' : '');
+                btn.textContent = cat.icon + ' ' + cat.name;
+                btn.onclick = () => selectCategory(cat.id);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectCategory(categoryId) {
+            currentCategory = categoryId;
+            document.querySelectorAll('.category-button').forEach((btn, i) => {
+                btn.classList.toggle('active', categories[i].id === categoryId);
+            });
+        }
+
+        function performSearch() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query || isLoading) return;
+
+            isLoading = true;
+            document.getElementById('searchIcon').innerHTML = '<span class="spinner">⏳</span>';
+            document.getElementById('searchButton').disabled = true;
+
+            setTimeout(() => {
+                const filtered = currentCategory === 'all' 
+                    ? searchEngines 
+                    : searchEngines.filter(e => e.category === currentCategory);
+
+                displayResults(filtered, query);
+                isLoading = false;
+                document.getElementById('searchIcon').textContent = '🔍';
+                document.getElementById('searchButton').disabled = false;
+            }, 600);
+        }
+
+        function displayResults(engines, query) {
+            document.getElementById('welcomeBox').classList.add('hidden');
+            document.getElementById('resultsInfo').classList.remove('hidden');
+            document.getElementById('resultsInfo').textContent = engines.length + ' 個の検索エンジンで検索';
+
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = '';
+
+            engines.forEach(engine => {
+                const card = document.createElement('a');
+                card.className = 'result-card';
+                card.href = engine.url + encodeURIComponent(query) + (engine.extra || '');
+                card.target = '_blank';
+                card.rel = 'noopener noreferrer';
+
+                const header = document.createElement('div');
+                header.className = 'result-header';
+                header.style.background = engine.color;
+
+                const content = document.createElement('div');
+                content.className = 'result-content';
+
+                const icon = document.createElement('div');
+                icon.className = 'result-icon';
+                icon.textContent = engine.icon;
+
+                const title = document.createElement('div');
+                title.className = 'result-title';
+                title.innerHTML = '<span>' + engine.title + '</span><span style="font-size:0.75rem">↗</span>';
+
+                content.appendChild(icon);
+                content.appendChild(title);
+                card.appendChild(header);
+                card.appendChild(content);
+                grid.appendChild(card);
+            });
+        }
+
+        document.getElementById('searchButton').addEventListener('click', performSearch);
+        document.getElementById('searchInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') performSearch();
+        });
+
+        initCategories();
+    </script>
+</body>
+</html>
