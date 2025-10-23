@@ -63,6 +63,69 @@
             });
         }
 
+        function displayInvidiousResults(items) {
+            const results = document.getElementById('results');
+            
+            items.forEach(item => {
+                const videoId = item.videoId;
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.onclick = () => playVideo(videoId, item.title);
+
+                // サムネイルURLの処理
+                let thumbnail = '';
+                if (item.videoThumbnails && item.videoThumbnails.length > 0) {
+                    // 中サイズのサムネイルを探す
+                    const mediumThumb = item.videoThumbnails.find(t => t.quality === 'medium' || t.quality === 'default');
+                    thumbnail = mediumThumb ? mediumThumb.url : item.videoThumbnails[0].url;
+                    
+                    // 相対URLの場合は絶対URLに変換
+                    if (thumbnail.startsWith('/')) {
+                        thumbnail = `https://i.ytimg.com${thumbnail}`;
+                    }
+                } else {
+                    thumbnail = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+                }
+
+                card.innerHTML = `
+                    <img src="${thumbnail}" alt="${item.title}">
+                    <div class="video-info">
+                        <div class="video-title">${item.title}</div>
+                        <div class="video-channel">${item.author || item.uploaderName || 'Unknown'}</div>
+                    </div>
+                `;
+
+                results.appendChild(card);
+            });
+        }
+
+        function displayPipedResults(items) {
+            const results = document.getElementById('results');
+            
+            items.forEach(item => {
+                if (item.type !== 'stream') return; // 動画のみ
+                
+                const videoId = item.url ? item.url.split('v=')[1] || item.url.split('/').pop() : '';
+                if (!videoId) return;
+                
+                const card = document.createElement('div');
+                card.className = 'video-card';
+                card.onclick = () => playVideo(videoId, item.title);
+
+                const thumbnail = item.thumbnail || `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+
+                card.innerHTML = `
+                    <img src="${thumbnail}" alt="${item.title}">
+                    <div class="video-info">
+                        <div class="video-title">${item.title}</div>
+                        <div class="video-channel">${item.uploaderName || item.uploaderUrl || 'Unknown'}</div>
+                    </div>
+                `;
+
+                results.appendChild(card);
+            });
+        }
+
         function playVideo(videoId, title) {
             const playerSection = document.getElementById('playerSection');
             const currentVideo = document.getElementById('currentVideo');
@@ -91,6 +154,10 @@
             btnStream.disabled = true;
             btnStream.textContent = '🎬 取得中...';
             
+            const btnGoogleVideo = document.getElementById('btnGoogleVideo');
+            btnGoogleVideo.disabled = true;
+            btnGoogleVideo.textContent = '🎥 取得中...';
+            
             addDebug('🔍 ストリーム情報の取得を開始...');
             addDebug('📊 簡易テストモード: 最初の3サーバーのみ試行');
             
@@ -100,6 +167,8 @@
                     availableStreams = streams;
                     btnStream.disabled = false;
                     btnStream.textContent = '🎬 ストリーム再生';
+                    btnGoogleVideo.disabled = false;
+                    btnGoogleVideo.textContent = '🎥 GoogleVideo';
                     addDebug(`✅ ${streams.length}個のストリームを取得成功！`);
                     addDebug(`📊 API: ${streams[0].type}`);
                     addDebug(`🎚️ 画質: ${streams.map(s => s.quality).join(', ')}`);
@@ -107,6 +176,8 @@
                 } else {
                     btnStream.disabled = true;
                     btnStream.textContent = '🎬 利用不可';
+                    btnGoogleVideo.disabled = true;
+                    btnGoogleVideo.textContent = '🎥 利用不可';
                     addDebug('❌ ストリーム取得失敗');
                     addDebug('💡 埋め込み再生をご利用ください');
                 }
@@ -114,6 +185,8 @@
                 addDebug(`❌ エラー: ${err.message}`);
                 btnStream.disabled = true;
                 btnStream.textContent = '🎬 エラー';
+                btnGoogleVideo.disabled = true;
+                btnGoogleVideo.textContent = '🎥 エラー';
             });
 
             playerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -281,6 +354,35 @@
                 playerContainer.innerHTML = '<video id="player" controls autoplay style="width:100%;height:100%;"></video>';
                 qualityControls.style.display = 'flex';
                 changeQuality('best');
+                return;
+            }
+
+            if (mode === 'googlevideo') {
+                if (availableStreams.length === 0) {
+                    showError('ストリーム情報が取得できていません');
+                    addDebug('❌ ストリーム情報なし');
+                    return;
+                }
+                
+                // googlevideo.comのURLを探す
+                const googleVideoStream = availableStreams.find(s => 
+                    s.url && s.url.includes('googlevideo.com') && s.hasAudio
+                );
+                
+                if (!googleVideoStream) {
+                    showError('GoogleVideo URLが見つかりません');
+                    addDebug('❌ GoogleVideo URL なし');
+                    return;
+                }
+                
+                addDebug(`📺 GoogleVideo iframe埋め込みを作成`);
+                addDebug(`🔗 URL: ${googleVideoStream.url.substring(0, 100)}...`);
+                
+                // googlevideo.comのURLをiframeで埋め込み
+                playerContainer.innerHTML = `<iframe id="player" width="100%" height="100%" src="${googleVideoStream.url}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+                
+                streamUrl.textContent = `GoogleVideo直接再生 | 画質: ${googleVideoStream.quality} ${googleVideoStream.hasAudio ? '🔊' : '🔇'}`;
+                addDebug(`✅ GoogleVideo埋め込み完了`);
                 return;
             }
 
@@ -828,6 +930,7 @@
             </div>
             <div class="controls">
                 <button onclick="setPlayMode('stream')" id="btnStream">🎬 ストリーム再生</button>
+                <button onclick="setPlayMode('googlevideo')" id="btnGoogleVideo">🎥 GoogleVideo</button>
                 <button onclick="setPlayMode('ytjs')" id="btnYtjs">⚡ YTJS再生</button>
                 <button onclick="setPlayMode('embed')">📺 埋め込み再生</button>
                 <button onclick="setPlayMode('nocookie')">🍪 No Cookie</button>
