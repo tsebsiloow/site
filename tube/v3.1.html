@@ -1,0 +1,75 @@
+// yt-dlp ベースのAPI
+            {
+                name: 'YT-DLP',
+                servers: [
+                    'https://yt-dl-test.vercel.app',
+                    'https://youtube-dl-api.vercel.app'
+                ],
+                getUrl: (server, videoId) => `${server}/api/info?url=https://www.youtube.com/watch?v=${videoId}`,
+                parseResponse: (data) => {
+                    if (!data.formats) return [];
+                    return data.formats
+                        .filter(f => f.url && f.vcodec && f.vcodec !== 'none')
+                        .map(f => ({
+                            url: f.url,
+                            quality: f.height ? `${f.height}p` : (f.format_note || 'auto'),
+                            type: 'YT-DLP',
+                            hasAudio: f.acodec && f.acodec !== 'none',
+                            format_id: f.format_id,
+                            ext: f.ext
+                        }));
+                }
+            },
+            // GoogleVideo.com 直接取得
+            {
+                name: 'GoogleVideo',
+                servers: ['https://cors-anywhere.herokuapp.com'],
+                getUrl: (server, videoId) => `${server}/https://www.youtube.com/get_video_info?video_id=${videoId}`,
+                parseResponse: (data) => {
+                    try {
+                        // URLエンコードされたデータをパース
+                        const params = new URLSearchParams(data);
+                        const playerResponse = JSON.parse(params.get('player_response') || '{}');
+                        
+                        if (!playerResponse.streamingData) return [];
+                        
+                        const streams = [];
+                        const streamingData = playerResponse.streamingData;
+                        
+                        // formats（音声付き）
+                        if (streamingData.formats) {
+                            streamingData.formats.forEach(f => {
+                                if (f.url) {
+                                    streams.push({
+                                        url: f.url,
+                                        quality: f.qualityLabel || f.quality || 'auto',
+                                        type: 'GoogleVideo',
+                                        hasAudio: true,
+                                        itag: f.itag
+                                    });
+                                }
+                            });
+                        }
+                        
+                        // adaptiveFormats（高画質）
+                        if (streamingData.adaptiveFormats) {
+                            streamingData.adaptiveFormats.forEach(f => {
+                                if (f.url && f.mimeType && f.mimeType.includes('video')) {
+                                    streams.push({
+                                        url: f.url,
+                                        quality: f.qualityLabel || 'auto',
+                                        type: 'GoogleVideo',
+                                        hasAudio: false,
+                                        itag: f.itag
+                                    });
+                                }
+                            });
+                        }
+                        
+                        return streams;
+                    } catch (err) {
+                        console.error('GoogleVideo parse error:', err);
+                        return [];
+                    }
+                }
+            }
