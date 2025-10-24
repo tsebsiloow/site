@@ -1,0 +1,23 @@
+// CORSプロキシ設定
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ];
+        let currentProxyIndex = 0;
+
+        function getProxiedUrl(url) {
+            const proxy = CORS_PROXIES[currentProxyIndex];
+            return `${proxy}${encodeURIComponent(url)}`;
+        }
+
+        function rotateProxy() {
+            currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
+            addDebug(`🔄 プロキシ切り替え: ${CORS_PROXIES[currentProxyIndex]}`);
+        }
+
+        const streamAPIs = [
+            {
+                name: 'Invidious',
+                servers: [
+                    'https://nyc1.iv.ggtyler.dev',
