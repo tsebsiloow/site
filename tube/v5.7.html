@@ -1324,21 +1324,9 @@
                 embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideoId}?autoplay=1`;
                 streamUrl.textContent = `No Cookie埋め込み | プライバシー重視`;
             } else if (mode === 'education') {
-                const eduParams = [
-                    'autoplay=1',
-                    'mute=0',
-                    'controls=1',
-                    'start=0',
-                    'playsinline=1',
-                    'showinfo=0',
-                    'rel=0',
-                    'iv_load_policy=3',
-                    'modestbranding=1',
-                    'fs=1',
-                    'cc_load_policy=0',
-                    'enablejsapi=1'
+                const CONFIG_URL = "https://raw.githubusercontent.com/siawaseok3/wakame/master/video_config.json";
                 ].join('&');
-                embedUrl = `https://www.youtube.com/embed/${currentVideoId}?${eduParams}`;
+                embedUrl = `https://www.youtubeeducation.com/embed/${currentVideoId}?${eduParams}`;
                 streamUrl.textContent = `Education埋め込み | 教育プラットフォーム向け設定`;
             }
 
