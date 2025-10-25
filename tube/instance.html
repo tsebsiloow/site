@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Wool-Tube</title>
+    <title>WOOLtube Instance</title>
     <style>
         * {
             margin: 0;
@@ -13,21 +13,22 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #000066;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             padding: 20px;
-            color: white;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1000px;
             margin: 0 auto;
         }
 
         h1 {
+            color: white;
             text-align: center;
             margin-bottom: 30px;
             font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -35,38 +36,48 @@
         }
 
         .logo {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
             background: white;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 45px;
+            font-size: 40px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: float 3s ease-in-out infinite;
         }
 
-        .search-box {
-            background: linear-gradient(135deg, #4a0e34 0%, #2d1b3d 100%);
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .input-box {
+            background: white;
             padding: 30px;
             border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             margin-bottom: 30px;
         }
 
         .input-group {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
         }
 
-        input {
+        input[type="text"] {
             flex: 1;
             padding: 15px;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 2px solid #e0e0e0;
             border-radius: 8px;
             font-size: 16px;
-            background: #000000;
-            color: white;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #7b1fa2;
         }
 
         button {
@@ -78,97 +89,106 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         button:hover {
             transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(123,31,162,0.5);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
         .player-section {
             background: white;
             padding: 30px;
             border-radius: 15px;
-            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
             display: none;
         }
 
-        .player-section.active {
-            display: block;
+        #currentVideo {
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
         }
 
         #playerContainer {
             width: 100%;
             aspect-ratio: 16/9;
-            background: #000;
             border-radius: 10px;
             overflow: hidden;
+            background: #000;
         }
 
-        iframe, video {
+        video {
             width: 100%;
             height: 100%;
         }
 
-        .video-title {
-            color: #333;
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
+        .quality-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .info, .error {
-            padding: 15px;
+        .quality-controls button {
+            padding: 12px 20px;
+            font-size: 14px;
+        }
+
+        .quality-controls button.active {
+            background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
+            box-shadow: 0 3px 10px rgba(76,175,80,0.4);
+        }
+
+        .stream-info {
+            margin-top: 15px;
+            padding: 12px;
+            background: #f5f5f5;
             border-radius: 8px;
-            margin-bottom: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
         }
 
-        .info {
-            background: #4CAF50;
+        .loading {
+            text-align: center;
             color: white;
+            font-size: 18px;
+            margin: 20px 0;
         }
 
         .error {
             background: #ff5252;
             color: white;
-        }
-
-        .results {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .video-card {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.3s;
-        }
-
-        .video-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .video-card img {
-            width: 100%;
-            height: 180px;
-            object-fit: cover;
-        }
-
-        .video-info {
             padding: 15px;
-            color: #333;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        .video-card-title {
-            font-weight: bold;
-            margin-bottom: 8px;
+        .info {
+            background: #4CAF50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            text-align: center;
         }
 
-        .video-channel {
+        .note {
+            font-size: 13px;
             color: #666;
-            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
         }
     </style>
 </head>
@@ -176,166 +196,276 @@
     <div class="container">
         <h1>
             <div class="logo">🐑</div>
-            Wool-Tube
+            WOOLtube Instance
         </h1>
         
-        <div class="search-box">
+        <div class="input-box">
             <div class="input-group">
-                <input type="text" id="searchInput" placeholder="YouTube URを入力">
-                <button onclick="handleSearch()">検索</button>
+                <input type="text" id="videoUrl" placeholder="YouTube URLを入力してください" onkeypress="if(event.key==='Enter') loadVideo()">
+                <button onclick="loadVideo()">再生</button>
+            </div>
+            <div class="note">
+                例: https://www.youtube.com/watch?v=VIDEO_ID または https://youtu.be/VIDEO_ID
             </div>
         </div>
 
-        <div id="infoMessage" class="info" style="display: none;"></div>
-        <div id="errorMessage" class="error" style="display: none;"></div>
-
-        <div id="playerSection" class="player-section">
-            <div class="video-title" id="videoTitle">動画タイトル</div>
-            <div id="playerContainer"></div>
+        <div id="loading" class="loading" style="display: none;">ストリームを取得中...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="info" class="info" style="display: none;"></div>
+        
+        <div class="player-section" id="playerSection">
+            <div id="currentVideo"></div>
+            <div id="playerContainer">
+                <video id="player" controls autoplay></video>
+            </div>
+            <div class="quality-controls" id="qualityControls"></div>
+            <div class="stream-info" id="streamInfo"></div>
         </div>
-
-        <div class="results" id="results"></div>
     </div>
 
     <script>
-        console.log('✅ スクリプト読み込み完了');
+        let currentVideoId = null;
+        let availableStreams = [];
 
-        function showInfo(msg) {
-            console.log('ℹ️', msg);
-            const el = document.getElementById('infoMessage');
-            el.textContent = msg;
-            el.style.display = 'block';
-            setTimeout(() => el.style.display = 'none', 3000);
+        const CORS_PROXIES = [
+            'https://api.allorigins.win/raw?url=',
+            'https://corsproxy.io/?',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ];
+        let currentProxyIndex = 0;
+
+        function getProxiedUrl(url) {
+            return `${CORS_PROXIES[currentProxyIndex]}${encodeURIComponent(url)}`;
         }
 
-        function showError(msg) {
-            console.error('❌', msg);
-            const el = document.getElementById('errorMessage');
-            el.textContent = msg;
-            el.style.display = 'block';
+        function rotateProxy() {
+            currentProxyIndex = (currentProxyIndex + 1) % CORS_PROXIES.length;
         }
 
-        function handleSearch() {
-            console.log('🔍 検索ボタンがクリックされました');
-            
-            const input = document.getElementById('searchInput');
-            const query = input.value.trim();
-            
-            console.log('入力値:', query);
+        const streamAPIs = [
+            {
+                name: 'Invidious',
+                servers: [
+                    'https://nyc1.iv.ggtyler.dev',
+                    'https://invid-api.poketube.fun',
+                    'https://invidious.nikkosphere.com',
+                    'https://invidious.privacydev.net',
+                    'https://invidious.projectsegfau.lt',
+                    'https://yewtu.be'
+                ],
+                getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
+                parseResponse: (data) => {
+                    const streams = [];
+                    if (data.formatStreams) {
+                        data.formatStreams.forEach(s => {
+                            if (s.url) {
+                                streams.push({ 
+                                    url: s.url, 
+                                    quality: s.qualityLabel || s.quality || 'unknown', 
+                                    type: 'Invidious',
+                                    hasAudio: true
+                                });
+                            }
+                        });
+                    }
+                    return streams;
+                }
+            },
+            {
+                name: 'Piped',
+                servers: [
+                    'https://pipedapi.kavin.rocks',
+                    'https://api-piped.mha.fi',
+                    'https://api.piped.projectsegfau.lt'
+                ],
+                getUrl: (server, videoId) => `${server}/streams/${videoId}`,
+                parseResponse: (data) => {
+                    if (!data.videoStreams) return [];
+                    return data.videoStreams.map(s => ({
+                        url: s.url,
+                        quality: s.quality,
+                        type: 'Piped',
+                        hasAudio: true
+                    }));
+                }
+            }
+        ];
 
-            if (!query) {
-                showError('検索キーワードまたはURLを入力してください');
+        async function loadVideo() {
+            const urlInput = document.getElementById('videoUrl').value.trim();
+            
+            if (!urlInput) {
+                showError('YouTube URLを入力してください');
                 return;
             }
 
-            // YouTube URLチェック
-            const videoIdMatch = query.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-            
-            if (videoIdMatch) {
-                const videoId = videoIdMatch[1];
-                console.log('✅ YouTube URL検出:', videoId);
-                playVideo(videoId, 'YouTube動画');
+            const videoIdMatch = urlInput.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
+            if (!videoIdMatch) {
+                showError('有効なYouTube URLを入力してください');
                 return;
             }
 
-            // 検索実行
-            console.log('🔍 検索を開始:', query);
-            searchVideos(query);
-        }
+            const videoId = videoIdMatch[1];
+            currentVideoId = videoId;
 
-        function playVideo(videoId, title) {
-            console.log('🎬 再生開始:', videoId, title);
-
-            const playerSection = document.getElementById('playerSection');
-            const videoTitle = document.getElementById('videoTitle');
-            const playerContainer = document.getElementById('playerContainer');
-
-            videoTitle.textContent = title;
-            playerSection.classList.add('active');
-
-            // 埋め込みプレーヤーを作成
-            playerContainer.innerHTML = `
-                <iframe 
-                    width="100%" 
-                    height="100%" 
-                    src="https://www.youtube.com/embed/${videoId}?autoplay=1" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen>
-                </iframe>
-            `;
-
-            console.log('✅ プレーヤー作成完了');
-            
-            playerSection.scrollIntoView({ behavior: 'smooth' });
-            showInfo('動画を再生中');
-        }
-
-        async function searchVideos(query) {
-            showInfo('検索中...');
-            
-            const results = document.getElementById('results');
-            results.innerHTML = '';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('error').style.display = 'none';
+            document.getElementById('playerSection').style.display = 'none';
 
             try {
-                console.log('📡 Invidious APIに接続中...');
+                const streams = await fetchStreamUrls(videoId);
                 
-                const response = await fetch(
-                    `https://yewtu.be/api/v1/search?q=${encodeURIComponent(query)}&type=video`,
-                    { signal: AbortSignal.timeout(10000) }
-                );
-
-                console.log('レスポンス:', response.status);
-
-                if (!response.ok) {
-                    throw new Error('API error');
+                if (streams.length === 0) {
+                    throw new Error('ストリームの取得に失敗しました');
                 }
 
-                const data = await response.json();
-                console.log('検索結果:', data.length, '件');
-
-                if (data.length === 0) {
-                    showError('検索結果が見つかりませんでした');
-                    return;
-                }
-
-                // 結果を表示
-                data.slice(0, 12).forEach(video => {
-                    const card = document.createElement('div');
-                    card.className = 'video-card';
-                    card.onclick = () => playVideo(video.videoId, video.title);
-
-                    const thumbnail = video.videoThumbnails?.[0]?.url || 
-                                    `https://i.ytimg.com/vi/${video.videoId}/hqdefault.jpg`;
-
-                    card.innerHTML = `
-                        <img src="${thumbnail}" alt="${video.title}">
-                        <div class="video-info">
-                            <div class="video-card-title">${video.title}</div>
-                            <div class="video-channel">${video.author || 'Unknown'}</div>
-                        </div>
-                    `;
-
-                    results.appendChild(card);
-                });
-
-                console.log('✅ 検索結果表示完了');
-                showInfo(`${data.length}件の結果を表示`);
-
+                availableStreams = streams;
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('playerSection').style.display = 'block';
+                document.getElementById('currentVideo').textContent = `動画ID: ${videoId}`;
+                
+                createQualityButtons();
+                playBestQuality();
+                
+                showInfo(`${streams.length}個のストリームを取得しました`);
             } catch (err) {
-                console.error('検索エラー:', err);
-                showError('検索に失敗しました: ' + err.message);
+                document.getElementById('loading').style.display = 'none';
+                showError(err.message);
             }
         }
 
-        // Enterキーで検索
-        document.getElementById('searchInput').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                handleSearch();
+        async function fetchStreamUrls(videoId) {
+            for (const api of streamAPIs) {
+                for (const server of api.servers) {
+                    try {
+                        const apiUrl = api.getUrl(server, videoId);
+                        const proxiedUrl = getProxiedUrl(apiUrl);
+                        
+                        let response;
+                        try {
+                            response = await fetch(proxiedUrl, { signal: AbortSignal.timeout(8000) });
+                        } catch (proxyErr) {
+                            rotateProxy();
+                            const retryUrl = getProxiedUrl(apiUrl);
+                            response = await fetch(retryUrl, { signal: AbortSignal.timeout(8000) });
+                        }
+                        
+                        if (!response.ok) continue;
+                        
+                        const data = await response.json();
+                        const streams = api.parseResponse(data);
+                        
+                        if (streams.length > 0) {
+                            return streams;
+                        }
+                    } catch (err) {
+                        continue;
+                    }
+                }
             }
-        });
+            return [];
+        }
 
-        console.log('✅ 初期化完了');
+        function createQualityButtons() {
+            const qualityControls = document.getElementById('qualityControls');
+            qualityControls.innerHTML = '';
+            
+            const audioStreams = availableStreams.filter(s => s.hasAudio);
+            const sortableStreams = audioStreams.length > 0 ? audioStreams : availableStreams;
+            
+            const qualityMap = new Map();
+            sortableStreams.forEach(stream => {
+                const quality = String(stream.quality);
+                if (!qualityMap.has(quality)) {
+                    qualityMap.set(quality, stream);
+                }
+            });
+            
+            const sortedQualities = Array.from(qualityMap.entries()).sort((a, b) => {
+                const getQualityValue = (q) => {
+                    const match = q.match(/(\d+)/);
+                    return match ? parseInt(match[1]) : 0;
+                };
+                return getQualityValue(b[0]) - getQualityValue(a[0]);
+            });
+            
+            sortedQualities.forEach(([quality, stream], index) => {
+                const button = document.createElement('button');
+                button.textContent = `${quality}`;
+                button.onclick = () => changeQualityByIndex(index);
+                button.dataset.index = index;
+                qualityControls.appendChild(button);
+            });
+        }
+
+        function playBestQuality() {
+            changeQualityByIndex(0);
+        }
+
+        function changeQualityByIndex(index) {
+            const audioStreams = availableStreams.filter(s => s.hasAudio);
+            const sortableStreams = audioStreams.length > 0 ? audioStreams : availableStreams;
+            
+            const qualityMap = new Map();
+            sortableStreams.forEach(stream => {
+                const quality = String(stream.quality);
+                if (!qualityMap.has(quality)) {
+                    qualityMap.set(quality, stream);
+                }
+            });
+            
+            const sortedQualities = Array.from(qualityMap.entries()).sort((a, b) => {
+                const getQualityValue = (q) => {
+                    const match = q.match(/(\d+)/);
+                    return match ? parseInt(match[1]) : 0;
+                };
+                return getQualityValue(b[0]) - getQualityValue(a[0]);
+            });
+            
+            const [quality, selectedStream] = sortedQualities[index];
+            
+            const qualityControls = document.getElementById('qualityControls');
+            const buttons = qualityControls.querySelectorAll('button');
+            buttons.forEach((btn, i) => {
+                if (i === index) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            
+            playStream(selectedStream);
+        }
+
+        function playStream(stream) {
+            const player = document.getElementById('player');
+            const streamInfo = document.getElementById('streamInfo');
+            
+            player.src = stream.url;
+            player.play().catch(e => {
+                showError('ストリームの再生に失敗しました');
+            });
+            
+            streamInfo.textContent = `画質: ${stream.quality} | API: ${stream.type}`;
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.style.display = 'block';
+            setTimeout(() => {
+                error.style.display = 'none';
+            }, 5000);
+        }
+
+        function showInfo(message) {
+            const info = document.getElementById('info');
+            info.textContent = message;
+            info.style.display = 'block';
+            setTimeout(() => {
+                info.style.display = 'none';
+            }, 3000);
+        }
     </script>
 </body>
 </html>
