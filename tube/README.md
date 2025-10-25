@@ -3,16 +3,5 @@
 ### WoolTubeです。
 
 1. v4.0以降でストリーム再生で視聴できるようになりました。
-2. 埋め込み再生、nocookie再生、youtube educationで再生することも可能です。
-3. invidiousやpiredを使用した検索機能を搭載しています。
-4. 検索したい場合は自分のgoogleAPIを使いましょう。（invidiousのAPIが利用できない、googleで検索ができない場合）
-
-### googleAPIの取得方法
-
-1. googleアカウントが必須です。　ない人は作成してください。
-2. [google console](https://console.cloud.google.com/)にアクセス
-3. YouTube Data API v3 と検索
-4. 有効を押す
-5. 左側にあるメニューから認証情報のページにアクセス
-6. 認証情報を追加からAPIを選ぶ
-7. これでAPIが取得できます。
+2. v7.0で検索機能の大幅アップデートがｓりました。
+3. v7.2でeducationで視聴できるようになりました。
