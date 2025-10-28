@@ -455,7 +455,6 @@
             'd3b864851ecd94e6a'
         ];
         
-        // Education用パラメータを取得
         async function loadEducationParams() {
             if (educationParams) return educationParams;
             
@@ -537,57 +536,7 @@
                     'https://yt.artemislena.eu',
                     'https://invidious.flokinet.to',
                     'https://invidious.projectsegfau.lt',
-                    'https://invidious.privacydev.net',
-                    'https://iv.melmac.space',
-                    'https://iv.ggtyler.dev',
-                    'https://invidious.lunar.icu',
-                    'https://inv.riverside.rocks',
-                    'https://invidious.snopyta.org',
-                    'https://invidious.kavin.rocks',
-                    'https://vid.mint.lgbt',
-                    'https://invidious.osi.kr',
-                    'https://invidious.io.lol',
-                    'https://inv.bp.projectsegfau.lt',
-                    'https://inv.tux.pizza',
-                    'https://invidious.protokolla.fi',
-                    'https://invidious.private.coffee',
-                    'https://yt.drgnz.club',
-                    'https://iv.datura.network',
-                    'https://invidious.fdn.fr',
-                    'https://invidious.perennialte.ch',
-                    'https://invidious.drgns.space',
-                    'https://invidious.slipfox.xyz',
-                    'https://inv.vern.cc',
-                    'https://invidious.sethforprivacy.com',
-                    'https://inv.odyssey346.dev',
-                    'https://invidious.namazso.eu',
-                    'https://inv.us.projectsegfau.lt',
-                    'https://yt.oelrichsgarcia.de',
-                    'https://invidious.jing.rocks',
-                    'https://iv.nboeck.de',
-                    'https://invidious.tiekoetter.com',
-                    'https://inv.citw.lgbt',
-                    'https://vid.priv.au',
-                    'https://nyc1.iv.ggtyler.dev',
-                    'https://invid-api.poketube.fun',
-                    'https://cal1.iv.ggtyler.dev',
-                    'https://invidious.nikkosphere.com',
-                    'https://lekker.gay',
-                    'https://invidious.lunivers.trade',
-                    'https://pol1.iv.ggtyler.dev',
-                    'https://eu-proxy.poketube.fun',
-                    'https://invidious.reallyaweso.me',
-                    'https://invidious.dhusch.de',
-                    'https://usa-proxy2.poketube.fun',
-                    'https://id.420129.xyz',
-                    'https://invidious.darkness.service',
-                    'https://youtube.mosesmang.com',
-                    'https://iv.duti.dev',
-                    'https://invidious.einfachzocken.eu',
-                    'https://invidious.adminforge.de',
-                    'https://invidious.esmailelbob.xyz',
-                    'https://invidious.0011.lt',
-                    'https://invidious.ducks.party'
+                    'https://invidious.privacydev.net'
                 ],
                 getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
                 parseResponse: (data) => {
@@ -598,8 +547,8 @@
                             if (s.url) {
                                 streams.push({ 
                                     url: s.url, 
-                                    quality: s.qualityLabel || s.quality, 
-                                    type: 'FreeTube',
+                                    quality: s.qualityLabel || s.quality || 'unknown', 
+                                    type: 'Invidious',
                                     hasAudio: true
                                 });
                             }
@@ -612,7 +561,7 @@
                                 streams.push({ 
                                     url: s.url, 
                                     quality: s.qualityLabel || 'auto', 
-                                    type: 'FreeTube',
+                                    type: 'Invidious',
                                     hasAudio: false
                                 });
                             }
@@ -623,385 +572,21 @@
                 }
             },
             {
-                name: 'CloudTube',
+                name: 'Piped',
                 servers: [
-                    'https://tube.cadence.moe',
-                    'https://cloudtube.rknight.me'
+                    'https://pipedapi.kavin.rocks',
+                    'https://api-piped.mha.fi',
+                    'https://pipedapi.tokhmi.xyz'
                 ],
-                getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
+                getUrl: (server, videoId) => `${server}/streams/${videoId}`,
                 parseResponse: (data) => {
-                    const streams = [];
-                    if (data.formatStreams) {
-                        data.formatStreams.forEach(s => {
-                            if (s.url) {
-                                streams.push({ 
-                                    url: s.url, 
-                                    quality: s.qualityLabel || s.quality, 
-                                    type: 'CloudTube',
-                                    hasAudio: true
-                                });
-                            }
-                        });
-                    }
-                    if (data.adaptiveFormats) {
-                        data.adaptiveFormats.forEach(s => {
-                            if (s.url && s.type && s.type.includes('video')) {
-                                streams.push({ 
-                                    url: s.url, 
-                                    quality: s.qualityLabel || 'auto', 
-                                    type: 'CloudTube',
-                                    hasAudio: false
-                                });
-                            }
-                        });
-                    }
-                    return streams;
-                }
-            },
-            {
-                name: 'LightTube',
-                servers: [
-                    'https://tube.kuylar.dev'
-                ],
-                getUrl: (server, videoId) => `${server}/api/player?v=${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.formats) return [];
-                    return data.formats
-                        .filter(f => f.url)
-                        .map(f => ({
-                            url: f.url,
-                            quality: f.quality || f.qualityLabel || 'auto',
-                            type: 'LightTube',
-                            hasAudio: true
-                        }));
-                }
-            },
-            {
-                name: 'Clipious',
-                servers: [
-                    'https://api.clipious.app'
-                ],
-                getUrl: (server, videoId) => `${server}/videos/${videoId}`,
-                parseResponse: (data) => {
-                    const streams = [];
-                    if (data.formatStreams) {
-                        data.formatStreams.forEach(s => {
-                            if (s.url) {
-                                streams.push({ 
-                                    url: s.url, 
-                                    quality: s.qualityLabel || s.quality, 
-                                    type: 'Clipious',
-                                    hasAudio: true
-                                });
-                            }
-                        });
-                    }
-                    return streams;
-                }
-            },
-            {
-                name: 'YTMous',
-                servers: [
-                    'https://ytmous.vercel.app'
-                ],
-                getUrl: (server, videoId) => `${server}/api/video/${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.formats) return [];
-                    return data.formats
-                        .filter(f => f.mimeType && f.mimeType.includes('video') && f.url)
-                        .map(f => ({
-                            url: f.url,
-                            quality: f.qualityLabel || f.quality || 'auto',
-                            type: 'YTMous',
-                            hasAudio: true
-                        }));
-                }
-            },
-            {
-                name: 'YT-DLP',
-                servers: [
-                    'https://yt-dl-test.vercel.app',
-                    'https://youtube-dl-api.vercel.app'
-                ],
-                getUrl: (server, videoId) => `${server}/api/info?url=https://www.youtube.com/watch?v=${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.formats) return [];
-                    return data.formats
-                        .filter(f => f.url && f.vcodec && f.vcodec !== 'none')
-                        .map(f => ({
-                            url: f.url,
-                            quality: f.height ? `${f.height}p` : (f.format_note || 'auto'),
-                            type: 'YT-DLP',
-                            hasAudio: f.acodec && f.acodec !== 'none',
-                            format_id: f.format_id,
-                            ext: f.ext
-                        }));
-                }
-            },
-            {
-                name: 'GoogleVideo',
-                servers: ['https://corsproxy.io/?'],
-                getUrl: (server, videoId) => `${server}https://www.youtube.com/get_video_info?video_id=${videoId}`,
-                parseResponse: (data) => {
-                    try {
-                        const params = new URLSearchParams(data);
-                        const playerResponse = JSON.parse(params.get('player_response') || '{}');
-                        
-                        if (!playerResponse.streamingData) return [];
-                        
-                        const streams = [];
-                        const streamingData = playerResponse.streamingData;
-                        
-                        if (streamingData.formats) {
-                            streamingData.formats.forEach(f => {
-                                if (f.url) {
-                                    streams.push({
-                                        url: f.url,
-                                        quality: f.qualityLabel || f.quality || 'auto',
-                                        type: 'GoogleVideo',
-                                        hasAudio: true,
-                                        itag: f.itag
-                                    });
-                                }
-                            });
-                        }
-                        
-                        if (streamingData.adaptiveFormats) {
-                            streamingData.adaptiveFormats.forEach(f => {
-                                if (f.url && f.mimeType && f.mimeType.includes('video')) {
-                                    streams.push({
-                                        url: f.url,
-                                        quality: f.qualityLabel || 'auto',
-                                        type: 'GoogleVideo',
-                                        hasAudio: false,
-                                        itag: f.itag
-                                    });
-                                }
-                            });
-                        }
-                        
-                        return streams;
-                    } catch (err) {
-                        console.error('GoogleVideo parse error:', err);
-                        return [];
-                    }
-                }
-            },
-            {
-                name: 'Cobalt',
-                servers: [
-                    'https://api.cobalt.tools',
-                    'https://co.wuk.sh'
-                ],
-                getUrl: (server, videoId) => `${server}/api/json`,
-                parseResponse: (data) => {
-                    if (!data.url) return [];
-                    return [{
-                        url: data.url,
-                        quality: data.quality || 'max',
-                        type: 'Cobalt',
+                    if (!data.videoStreams) return [];
+                    return data.videoStreams.map(s => ({
+                        url: s.url,
+                        quality: s.quality,
+                        type: 'Piped',
                         hasAudio: true
-                    }];
-                },
-                customFetch: async (server, videoId) => {
-                    const url = server;
-                    const proxiedUrl = getProxiedUrl(url);
-                    
-                    const response = await fetch(proxiedUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            url: `https://www.youtube.com/watch?v=${videoId}`,
-                            vQuality: 'max'
-                        }),
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    return response;
-                }
-            },
-            {
-                name: 'Y2Mate',
-                servers: [
-                    'https://www.y2mate.com/mates/analyzeV2/ajax'
-                ],
-                getUrl: (server, videoId) => server,
-                parseResponse: (data) => {
-                    if (!data.links || !data.links.mp4) return [];
-                    const streams = [];
-                    Object.entries(data.links.mp4).forEach(([quality, info]) => {
-                        if (info.url) {
-                            streams.push({
-                                url: info.url,
-                                quality: quality,
-                                type: 'Y2Mate',
-                                hasAudio: true
-                            });
-                        }
-                    });
-                    return streams;
-                },
-                customFetch: async (server, videoId) => {
-                    const formData = new FormData();
-                    formData.append('k_query', `https://www.youtube.com/watch?v=${videoId}`);
-                    formData.append('k_page', 'home');
-                    formData.append('hl', 'en');
-                    formData.append('q_auto', '0');
-                    
-                    const proxiedUrl = getProxiedUrl(server);
-                    
-                    const response = await fetch(proxiedUrl, {
-                        method: 'POST',
-                        body: formData,
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    return response;
-                }
-            },
-            {
-                name: 'SaveFrom',
-                servers: [
-                    'https://savefrom.net/download'
-                ],
-                getUrl: (server, videoId) => `${server}?url=https://www.youtube.com/watch?v=${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.url || !Array.isArray(data.url)) return [];
-                    return data.url
-                        .filter(u => u.url && u.type === 'video')
-                        .map(u => ({
-                            url: u.url,
-                            quality: u.quality || u.name || 'auto',
-                            type: 'SaveFrom',
-                            hasAudio: true
-                        }));
-                }
-            },
-            {
-                name: 'SSYoutube',
-                servers: [
-                    'https://ssyoutube.com/api/convert'
-                ],
-                getUrl: (server, videoId) => server,
-                parseResponse: (data) => {
-                    if (!data.formats) return [];
-                    return data.formats
-                        .filter(f => f.url)
-                        .map(f => ({
-                            url: f.url,
-                            quality: f.qualityLabel || f.quality || 'auto',
-                            type: 'SSYoutube',
-                            hasAudio: true
-                        }));
-                },
-                customFetch: async (server, videoId) => {
-                    const proxiedUrl = getProxiedUrl(server);
-                    
-                    const response = await fetch(proxiedUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: `https://www.youtube.com/watch?v=${videoId}`
-                        }),
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    return response;
-                }
-            },
-            {
-                name: 'KeepVid',
-                servers: [
-                    'https://keepvid.pro/api/video'
-                ],
-                getUrl: (server, videoId) => `${server}?url=https://www.youtube.com/watch?v=${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.formats) return [];
-                    return data.formats
-                        .filter(f => f.url && f.type === 'video')
-                        .map(f => ({
-                            url: f.url,
-                            quality: f.quality || 'auto',
-                            type: 'KeepVid',
-                            hasAudio: true
-                        }));
-                }
-            },
-            {
-                name: 'YouTubeToMP3',
-                servers: [
-                    'https://youtubetomp3music.com/api/convert'
-                ],
-                getUrl: (server, videoId) => server,
-                parseResponse: (data) => {
-                    if (!data.url) return [];
-                    return [{
-                        url: data.url,
-                        quality: data.quality || 'default',
-                        type: 'YouTubeToMP3',
-                        hasAudio: true
-                    }];
-                },
-                customFetch: async (server, videoId) => {
-                    const proxiedUrl = getProxiedUrl(server);
-                    
-                    const response = await fetch(proxiedUrl, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: `https://www.youtube.com/watch?v=${videoId}`,
-                            format: 'mp4'
-                        }),
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    return response;
-                }
-            },
-            {
-                name: 'YTBGoat',
-                servers: [
-                    'https://ytbgoat.com/api/video'
-                ],
-                getUrl: (server, videoId) => `${server}/${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.streams) return [];
-                    return data.streams
-                        .filter(s => s.url)
-                        .map(s => ({
-                            url: s.url,
-                            quality: s.quality || s.resolution || 'auto',
-                            type: 'YTBGoat',
-                            hasAudio: s.hasAudio !== false
-                        }));
-                }
-            },
-            {
-                name: 'loader.to',
-                servers: [
-                    'https://loader.to/ajax/download.php'
-                ],
-                getUrl: (server, videoId) => server,
-                parseResponse: (data) => {
-                    if (!data.url) return [];
-                    return [{
-                        url: data.url,
-                        quality: 'default',
-                        type: 'loader.to',
-                        hasAudio: true
-                    }];
-                },
-                customFetch: async (server, videoId) => {
-                    const formData = new FormData();
-                    formData.append('url', `https://www.youtube.com/watch?v=${videoId}`);
-                    
-                    const proxiedUrl = getProxiedUrl(server);
-                    
-                    const response = await fetch(proxiedUrl, {
-                        method: 'POST',
-                        body: formData,
-                        signal: AbortSignal.timeout(8000)
-                    });
-                    return response;
+                    }));
                 }
             }
         ];
@@ -1117,175 +702,27 @@
 
             if (apiKey) {
                 try {
-                    console.log('Trying YouTube Data API with key:', apiKey.substring(0, 10) + '...');
                     const response = await fetch(
                         `https://www.googleapis.com/youtube/v3/search?part=snippet&maxResults=12&q=${encodeURIComponent(query)}&type=video&key=${apiKey}`,
                         { signal: AbortSignal.timeout(15000) }
                     );
 
-                    console.log('YouTube Data API response:', response.status);
-
                     if (response.ok) {
                         const data = await response.json();
-                        console.log('YouTube Data API data:', data);
-                        
-                        if (data.items && data.items.length > 0) {
-                            displayGoogleResults(data.items);
-                            loading.style.display = 'none';
-                            showInfo(`✅ YouTube Data API で検索しました (Key: ${apiKey.substring(0, 10)}...)`);
-                            return;
-                        }
-                    } else {
-                        const errorData = await response.json();
-                        console.log('YouTube Data API error:', errorData);
-                    }
-                } catch (err) {
-                    console.log('YouTube Data API error:', err);
-                }
-            }
-
-            const cseApiKeys = [
-                'AIzaSyCXuHXy7PWFcXpXNuNnuWYRqU1Uu5Z2q_g',
-                'AIzaSyDQABKeZuMuGiGUxVl8qLW2bz_3nT6DZF8',
-                'AIzaSyB0cGnvjZ3vL-xKxQVZxLN8pG5L4hCXnhU'
-            ];
-
-            for (const cseId of GOOGLE_CSE_IDS) {
-                for (const cseKey of cseApiKeys) {
-                    try {
-                        console.log(`Trying Google CSE: ${cseId} with key ${cseKey.substring(0, 10)}...`);
-                        const cseUrl = `https://www.googleapis.com/customsearch/v1?key=${cseKey}&cx=${cseId}&q=${encodeURIComponent(query + ' site:youtube.com')}&num=10`;
-                        
-                        const response = await fetch(cseUrl, {
-                            signal: AbortSignal.timeout(15000)
-                        });
-
-                        console.log(`Google CSE ${cseId} response:`, response.status);
-
-                        if (response.ok) {
-                            const data = await response.json();
-                            console.log(`Google CSE data:`, data);
-                            
-                            if (data.items && data.items.length > 0) {
-                                displayCSEResults(data.items);
-                                loading.style.display = 'none';
-                                showInfo(`✅ Google Custom Search で検索しました (CSE: ${cseId})`);
-                                return;
-                            }
-                        }
-                    } catch (err) {
-                        console.log(`CSE API error (${cseId}, ${cseKey}):`, err.message);
-                        continue;
-                    }
-                }
-            }
-
-            const invidiousServers = [
-                'https://inv.perditum.com',
-                'https://inv.nadeko.net',
-                'https://invidious.nerdvpn.de',
-                'https://yewtu.be',
-                'https://invidious.f5.si',
-                'https://vid.puffyan.us',
-                'https://yt.artemislena.eu',
-                'https://invidious.flokinet.to',
-                'https://invidious.projectsegfau.lt',
-                'https://invidious.privacydev.net',
-                'https://iv.melmac.space',
-                'https://iv.ggtyler.dev',
-                'https://invidious.lunar.icu',
-                'https://inv.riverside.rocks',
-                'https://invidious.snopyta.org',
-                'https://invidious.kavin.rocks',
-                'https://vid.mint.lgbt',
-                'https://invidious.osi.kr',
-                'https://invidious.io.lol',
-                'https://inv.bp.projectsegfau.lt',
-                'https://inv.tux.pizza',
-                'https://invidious.protokolla.fi',
-                'https://invidious.private.coffee',
-                'https://yt.drgnz.club',
-                'https://iv.datura.network',
-                'https://invidious.fdn.fr',
-                'https://invidious.perennialte.ch',
-                'https://invidious.drgns.space',
-                'https://invidious.slipfox.xyz',
-                'https://inv.vern.cc',
-                'https://invidious.sethforprivacy.com',
-                'https://inv.odyssey346.dev',
-                'https://invidious.namazso.eu',
-                'https://inv.us.projectsegfau.lt',
-                'https://yt.oelrichsgarcia.de',
-                'https://invidious.jing.rocks',
-                'https://iv.nboeck.de',
-                'https://invidious.tiekoetter.com',
-                'https://inv.citw.lgbt',
-                'https://vid.priv.au'
-            ];
-
-            for (const server of invidiousServers) {
-                try {
-                    console.log(`Trying Invidious: ${server}`);
-                    const invUrl = `${server}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
-                    
-                    const response = await fetch(invUrl, {
-                        signal: AbortSignal.timeout(10000)
-                    });
-
-                    console.log(`Invidious ${server} response:`, response.status);
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log(`Invidious data:`, data);
                         
                         if (data && Array.isArray(data) && data.length > 0) {
                             displayInvidiousResults(data);
                             loading.style.display = 'none';
-                            showInfo(`✅ Invidious で検索しました (${server.split('//')[1]})`);
+                            showInfo(`✅ Invidious で検索しました`);
                             return;
                         }
                     }
                 } catch (err) {
-                    console.log(`Invidious error (${server}):`, err.message);
+                    console.log(`Invidious error:`, err.message);
                     continue;
                 }
             }
 
-            const pipedServers = [
-                'https://pipedapi.kavin.rocks',
-                'https://pipedapi.tokhmi.xyz',
-                'https://api.piped.projectsegfau.lt'
-            ];
-
-            for (const server of pipedServers) {
-                try {
-                    console.log(`Trying Piped: ${server}`);
-                    const pipedUrl = `${server}/search?q=${encodeURIComponent(query)}&filter=videos`;
-                    
-                    const response = await fetch(pipedUrl, {
-                        signal: AbortSignal.timeout(10000)
-                    });
-
-                    console.log(`Piped ${server} response:`, response.status);
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log(`Piped data:`, data);
-                        
-                        if (data && data.items && data.items.length > 0) {
-                            displayPipedResults(data.items);
-                            loading.style.display = 'none';
-                            showInfo(`✅ Piped で検索しました (${server.split('//')[1]})`);
-                            return;
-                        }
-                    }
-                } catch (err) {
-                    console.log(`Piped error (${server}):`, err.message);
-                    continue;
-                }
-            }
-
-            console.log('All search methods failed, showing popular videos');
             displayPopularVideos(query);
             loading.style.display = 'none';
             showInfo('⚠️ 検索APIが利用できないため、人気動画を表示しています');
@@ -1298,13 +735,7 @@
                 { id: 'dQw4w9WgXcQ', title: 'Rick Astley - Never Gonna Give You Up', channel: 'Rick Astley' },
                 { id: 'kJQP7kiw5Fk', title: 'Luis Fonsi - Despacito ft. Daddy Yankee', channel: 'Luis Fonsi' },
                 { id: 'JGwWNGJdvx8', title: 'Ed Sheeran - Shape of You', channel: 'Ed Sheeran' },
-                { id: 'OPf0YbXqDm0', title: 'Mark Ronson - Uptown Funk ft. Bruno Mars', channel: 'Mark Ronson' },
-                { id: 'CevxZvSJLk8', title: 'Katy Perry - Roar', channel: 'Katy Perry' },
-                { id: '2Vv-BfVoq4g', title: 'PSY - GANGNAM STYLE', channel: 'officialpsy' },
-                { id: 'RgKAFK5djSk', title: 'Wiz Khalifa - See You Again ft. Charlie Puth', channel: 'Wiz Khalifa' },
-                { id: 'fRh_vgS2dFE', title: 'Justin Bieber - Sorry', channel: 'Justin Bieber' },
-                { id: '9bZkp7q19f0', title: 'PSY - GANGNAM STYLE(강남스타일) M/V', channel: 'officialpsy' },
-                { id: 'lXMskKTw3Bc', title: 'Maroon 5 - Sugar', channel: 'Maroon 5' }
+                { id: 'OPf0YbXqDm0', title: 'Mark Ronson - Uptown Funk ft. Bruno Mars', channel: 'Mark Ronson' }
             ];
 
             popularVideos.forEach(video => {
@@ -1338,44 +769,12 @@
                 card.onclick = () => playVideo(videoId, item.title);
 
                 let thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-                
-                if (item.videoThumbnails && item.videoThumbnails.length > 0) {
-                    const thumbObj = item.videoThumbnails.find(t => t.quality === 'medium') || item.videoThumbnails[0];
-                    if (thumbObj && thumbObj.url) {
-                        thumbnail = thumbObj.url.startsWith('http') ? thumbObj.url : 'https:' + thumbObj.url;
-                    }
-                }
 
                 card.innerHTML = `
-                    <img src="${thumbnail}" alt="${item.title || 'Video'}" onerror="this.src='https://img.youtube.com/vi/${videoId}/mqdefault.jpg'">
+                    <img src="${thumbnail}" alt="${item.title || 'Video'}">
                     <div class="video-info">
                         <div class="video-title">${item.title || 'Untitled Video'}</div>
                         <div class="video-channel">${item.author || 'Unknown Channel'}</div>
-                    </div>
-                `;
-
-                results.appendChild(card);
-            });
-        }
-
-        function displayPipedResults(items) {
-            const results = document.getElementById('results');
-            
-            items.slice(0, 12).forEach(item => {
-                if (!item.url) return;
-                
-                const videoId = item.url.replace('/watch?v=', '');
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                card.onclick = () => playVideo(videoId, item.title);
-
-                let thumbnail = item.thumbnail || `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-
-                card.innerHTML = `
-                    <img src="${thumbnail}" alt="${item.title || 'Video'}" onerror="this.src='https://img.youtube.com/vi/${videoId}/mqdefault.jpg'">
-                    <div class="video-info">
-                        <div class="video-title">${item.title || 'Untitled Video'}</div>
-                        <div class="video-channel">${item.uploaderName || 'Unknown Channel'}</div>
                     </div>
                 `;
 
@@ -1399,42 +798,6 @@
                     <div class="video-info">
                         <div class="video-title">${item.snippet.title}</div>
                         <div class="video-channel">${item.snippet.channelTitle}</div>
-                    </div>
-                `;
-
-                results.appendChild(card);
-            });
-        }
-
-        function displayCSEResults(items) {
-            const results = document.getElementById('results');
-            
-            items.forEach(item => {
-                const videoIdMatch = item.link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\s]+)/);
-                
-                if (!videoIdMatch) return;
-                
-                const videoId = videoIdMatch[1];
-                const card = document.createElement('div');
-                card.className = 'video-card';
-                card.onclick = () => playVideo(videoId, item.title);
-
-                let thumbnail = 'https://img.youtube.com/vi/' + videoId + '/mqdefault.jpg';
-                
-                if (item.pagemap && item.pagemap.cse_thumbnail && item.pagemap.cse_thumbnail[0]) {
-                    thumbnail = item.pagemap.cse_thumbnail[0].src;
-                } else if (item.pagemap && item.pagemap.cse_image && item.pagemap.cse_image[0]) {
-                    thumbnail = item.pagemap.cse_image[0].src;
-                }
-
-                const title = item.title.replace(' - YouTube', '');
-                const snippet = item.snippet || '';
-
-                card.innerHTML = `
-                    <img src="${thumbnail}" alt="${title}">
-                    <div class="video-info">
-                        <div class="video-title">${title}</div>
-                        <div class="video-channel">${snippet.substring(0, 100)}</div>
                     </div>
                 `;
 
@@ -1477,17 +840,13 @@
                     btnStream.disabled = false;
                     btnStream.textContent = '🎬 ストリーム再生';
                     addDebug(`✅ ${streams.length}個のストリームを取得成功！`);
-                    addDebug(`📊 API: ${streams[0].type}`);
-                    addDebug(`🎚️ 画質: ${streams.map(s => s.quality).join(', ')}`);
-                    showInfo(`ストリーム再生が利用可能です（${streams[0].type}）`);
+                    showInfo(`ストリーム再生が利用可能です`);
                     
-                    addDebug('🚀 自動的にストリーム再生を開始します');
                     setPlayMode('stream');
                 } else {
                     btnStream.disabled = true;
                     btnStream.textContent = '🎬 利用不可';
                     addDebug('❌ ストリーム取得失敗');
-                    addDebug('💡 埋め込み再生をご利用ください');
                 }
             }).catch(err => {
                 addDebug(`❌ エラー: ${err.message}`);
@@ -1505,69 +864,31 @@
             addDebug(`🌐 ${maxAttempts}個のエンドポイントを試行`);
             
             for (const api of streamAPIs) {
-                addDebug(`\n📡 ${api.name} API (${api.servers.length}サーバー)`);
+                addDebug(`\n📡 ${api.name} API`);
                 
                 for (const server of api.servers) {
                     attemptCount++;
                     try {
                         addDebug(`  [${attemptCount}/${maxAttempts}] ${server.replace('https://', '')}`);
                         
-                        let response;
-                        
-                        if (api.customFetch) {
-                            response = await api.customFetch(server, videoId);
-                        } else {
-                            const apiUrl = api.getUrl(server, videoId);
-                            const proxiedUrl = getProxiedUrl(apiUrl);
-                            
-                            try {
-                                response = await fetch(proxiedUrl, {
-                                    signal: AbortSignal.timeout(8000)
-                                });
-                            } catch (proxyErr) {
-                                addDebug(`    ⚠️ プロキシ1失敗、再試行...`);
-                                rotateProxy();
-                                const retryUrl = getProxiedUrl(apiUrl);
-                                response = await fetch(retryUrl, {
-                                    signal: AbortSignal.timeout(8000)
-                                });
-                            }
-                        }
+                        const apiUrl = api.getUrl(server, videoId);
+                        const response = await fetch(apiUrl, {
+                            signal: AbortSignal.timeout(8000)
+                        });
                         
                         addDebug(`    → HTTP ${response.status}`);
                         
-                        if (!response.ok) {
-                            continue;
-                        }
+                        if (!response.ok) continue;
                         
-                        const contentType = response.headers.get('content-type');
-                        let data;
-                        
-                        if (contentType && contentType.includes('application/json')) {
-                            data = await response.json();
-                        } else {
-                            data = await response.text();
-                        }
-                        
-                        addDebug(`    → データ取得成功`);
-                        
+                        const data = await response.json();
                         const streams = api.parseResponse(data);
                         
                         if (streams.length > 0) {
                             addDebug(`    ✅ ${streams.length}個のストリーム取得！`);
-                            streams.slice(0, 3).forEach((s, i) => {
-                                addDebug(`      [${i+1}] ${s.quality} ${s.hasAudio ? '🔊' : '🔇'}`);
-                            });
                             return streams;
-                        } else {
-                            addDebug(`    ⚠️ ストリーム0個`);
                         }
                     } catch (err) {
-                        if (err.name === 'AbortError') {
-                            addDebug(`    ⏱️ タイムアウト(8秒)`);
-                        } else {
-                            addDebug(`    ❌ ${err.message}`);
-                        }
+                        addDebug(`    ❌ ${err.message}`);
                         continue;
                     }
                 }
@@ -1578,10 +899,7 @@
         }
 
         function setPlayMode(mode) {
-            if (!currentVideoId) {
-                addDebug('❌ 動画IDがありません');
-                return;
-            }
+            if (!currentVideoId) return;
 
             currentPlayMode = mode;
             const playerContainer = document.getElementById('playerContainer');
@@ -1596,24 +914,19 @@
             if (mode === 'stream') {
                 if (availableStreams.length === 0) {
                     showError('ストリーム情報が取得できていません');
-                    addDebug('❌ ストリーム情報なし');
                     return;
                 }
                 
-                addDebug(`📺 video要素を作成`);
                 playerContainer.innerHTML = '<video id="player" controls autoplay style="width:100%;height:100%;"></video>';
                 qualityControls.style.display = 'grid';
                 
                 createQualityButtons();
-                
                 playBestQuality();
                 
                 setTimeout(() => applyLoopToCurrentPlayer(), 100);
                 return;
             }
 
-            addDebug(`📺 iframe埋め込みを作成: ${mode}`);
-            
             let embedUrl = '';
 
             if (mode === 'embed') {
@@ -1621,13 +934,13 @@
                 if (isLoopEnabled) {
                     embedUrl += `&loop=1&playlist=${currentVideoId}`;
                 }
-                streamUrl.textContent = `埋め込み再生 | https://www.youtube.com/watch?v=${currentVideoId}`;
+                streamUrl.textContent = `埋め込み再生`;
             } else if (mode === 'nocookie') {
                 embedUrl = `https://www.youtube-nocookie.com/embed/${currentVideoId}?autoplay=1`;
                 if (isLoopEnabled) {
                     embedUrl += `&loop=1&playlist=${currentVideoId}`;
                 }
-                streamUrl.textContent = `No Cookie埋め込み | プライバシー重視`;
+                streamUrl.textContent = `No Cookie埋め込み`;
             } else if (mode === 'education') {
                 loadEducationParams().then(params => {
                     const eduParamsArray = [];
@@ -1642,22 +955,14 @@
                     }
                     
                     const educationUrl = `https://www.youtubeeducation.com/embed/${currentVideoId}?${eduParamsArray.join('&')}`;
-                    addDebug(`📚 YouTube Education URL: ${educationUrl}`);
                     
                     playerContainer.innerHTML = `<iframe id="player" width="100%" height="100%" src="${educationUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-                    streamUrl.textContent = `Education埋め込み | YouTube Education (パラメータ: GitHub設定)`;
-                    
-                    addDebug(`✅ Education埋め込み完了`);
+                    streamUrl.textContent = `Education埋め込み`;
                 });
-                
-                playerContainer.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#000;color:#fff;">Education設定を読み込み中...</div>';
-                streamUrl.textContent = 'Education設定を読み込み中...';
                 return;
             }
 
             playerContainer.innerHTML = `<iframe id="player" width="100%" height="100%" src="${embedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-            
-            addDebug(`✅ 埋め込み完了: ${embedUrl}`);
         }
 
         function createQualityButtons() {
@@ -1675,7 +980,6 @@
                 if (str.includes('high')) return 1080;
                 if (str.includes('medium')) return 720;
                 if (str.includes('low')) return 360;
-                if (str.includes('auto')) return 0;
                 return 0;
             };
             
@@ -1683,15 +987,14 @@
                 return getQualityValue(b.quality) - getQualityValue(a.quality);
             });
             
-            addDebug(`🎚️ ${sortedStreams.length}個の画質オプションを生成`);
+            addDebug(`🎚️ ${sortedStreams.length}個の画質オプション`);
             
             sortedStreams.forEach((stream, index) => {
                 const button = document.createElement('button');
                 const apiShort = stream.type.substring(0, 4);
                 button.textContent = `${stream.quality} ${stream.hasAudio ? '🔊' : '🔇'} [${apiShort}]`;
                 button.onclick = () => changeQualityByIndex(index);
-                button.dataset.index = index;
-                button.title = `${stream.quality} - ${stream.type} - ${stream.hasAudio ? '音声あり' : '音声なし'}`;
+                button.title = `${stream.quality} - ${stream.type}`;
                 qualityControls.appendChild(button);
             });
         }
@@ -1708,11 +1011,9 @@
                 const str = String(q).toLowerCase();
                 const match = str.match(/(\d+)/);
                 if (match) return parseInt(match[1]);
-                if (str.includes('max') || str.includes('best')) return 9999;
+                if (str.includes('max')) return 9999;
                 if (str.includes('high')) return 1080;
                 if (str.includes('medium')) return 720;
-                if (str.includes('low')) return 360;
-                if (str.includes('auto')) return 0;
                 return 0;
             };
             
@@ -1720,10 +1021,7 @@
                 return getQualityValue(b.quality) - getQualityValue(a.quality);
             });
             
-            if (index >= sortedStreams.length) {
-                addDebug('❌ 無効なインデックス');
-                return;
-            }
+            if (index >= sortedStreams.length) return;
             
             const selectedStream = sortedStreams[index];
             currentQuality = selectedStream.quality;
@@ -1746,13 +1044,11 @@
             const streamUrl = document.getElementById('streamUrl');
             
             if (!stream || !stream.url) {
-                addDebug('❌ ストリームの選択に失敗');
                 showError('ストリームの読み込みに失敗しました');
                 return;
             }
             
-            addDebug(`✅ 選択: ${stream.quality} (${stream.hasAudio ? '音声あり' : '音声なし'})`);
-            addDebug(`🔗 URL: ${stream.url.substring(0, 80)}...`);
+            addDebug(`✅ 選択: ${stream.quality}`);
             
             player.src = stream.url;
             player.play().then(() => {
@@ -1785,45 +1081,36 @@
                 let downloadUrl = null;
                 
                 if (availableStreams.length > 0) {
-                    addDebug('🔍 取得済みストリームURLを使用');
                     const stream = availableStreams.find(s => s.hasAudio) || availableStreams[0];
                     if (stream) {
                         downloadUrl = stream.url;
-                        addDebug(`✅ ストリームURL使用: ${stream.quality}`);
                     }
                 }
                 
                 if (!downloadUrl) {
-                    addDebug('🔍 新規取得を試行');
                     const streams = await fetchStreamUrls(currentVideoId);
                     if (streams.length > 0) {
                         const stream = streams.find(s => s.hasAudio) || streams[0];
                         downloadUrl = stream.url;
-                        addDebug(`✅ 新規URL取得: ${stream.quality}`);
                     }
                 }
 
                 if (downloadUrl) {
-                    addDebug('📥 ダウンロード開始...');
-                    
                     const a = document.createElement('a');
                     a.href = downloadUrl;
                     a.download = `${currentVideoId}.${type === 'audio' ? 'mp3' : 'mp4'}`;
                     a.target = '_blank';
-                    a.rel = 'noopener noreferrer';
                     
                     document.body.appendChild(a);
                     a.click();
                     document.body.removeChild(a);
                     
-                    showInfo(`${type === 'video' ? '動画' : '音声'}のダウンロードを開始しました`);
-                    addDebug('✅ ダウンロードリンククリック完了');
+                    showInfo(`ダウンロードを開始しました`);
                 } else {
-                    throw new Error('ダウンロードURLの取得に失敗しました');
+                    throw new Error('ダウンロードURLの取得に失敗');
                 }
             } catch (err) {
-                addDebug(`❌ ダウンロード失敗: ${err.message}`);
-                showError('ダウンロードに失敗しました。ストリーム再生をお試しください。');
+                showError('ダウンロードに失敗しました');
             } finally {
                 btnDownloadVideo.disabled = false;
                 btnDownloadAudio.disabled = false;
@@ -1851,123 +1138,34 @@
         }
     </script>
 </body>
-</html>data) => {
-                    const streams = [];
-                    
-                    if (data.formatStreams && data.formatStreams.length > 0) {
-                        data.formatStreams.forEach(s => {
-                            if (s.url) {
-                                streams.push({ 
-                                    url: s.url, 
-                                    quality: s.qualityLabel || s.quality || 'unknown', 
-                                    type: 'Invidious',
-                                    hasAudio: true
-                                });
-                            }
-                        });
+</html> data = await response.json();
+                        
+                        if (data.items && data.items.length > 0) {
+                            displayGoogleResults(data.items);
+                            loading.style.display = 'none';
+                            showInfo(`✅ YouTube Data API で検索しました`);
+                            return;
+                        }
                     }
+                } catch (err) {
+                    console.log('YouTube Data API error:', err);
+                }
+            }
+
+            const invidiousServers = [
+                'https://inv.perditum.com',
+                'https://inv.nadeko.net',
+                'https://invidious.nerdvpn.de',
+                'https://yewtu.be'
+            ];
+
+            for (const server of invidiousServers) {
+                try {
+                    const invUrl = `${server}/api/v1/search?q=${encodeURIComponent(query)}&type=video`;
                     
-                    if (data.adaptiveFormats && data.adaptiveFormats.length > 0) {
-                        data.adaptiveFormats.forEach(s => {
-                            if (s.url && s.type && s.type.includes('video')) {
-                                streams.push({ 
-                                    url: s.url, 
-                                    quality: s.qualityLabel || 'auto', 
-                                    type: 'Invidious',
-                                    hasAudio: false
-                                });
-                            }
-                        });
-                    }
-                    
-                    return streams;
-                }
-            },
-            {
-                name: 'Piped',
-                servers: [
-                    'https://pipedapi.kavin.rocks',
-                    'https://api-piped.mha.fi',
-                    'https://pipedapi.tokhmi.xyz',
-                    'https://pipedapi.adminforge.de',
-                    'https://api.piped.projectsegfau.lt',
-                    'https://pipedapi.pfcd.me',
-                    'https://api.piped.privacydev.net',
-                    'https://pipedapi.in.projectsegfau.lt',
-                    'https://pipedapi.osphost.fi'
-                ],
-                getUrl: (server, videoId) => `${server}/streams/${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.videoStreams) return [];
-                    return data.videoStreams.map(s => ({
-                        url: s.url,
-                        quality: s.quality,
-                        type: 'Piped',
-                        hasAudio: true
-                    }));
-                }
-            },
-            {
-                name: 'Poké',
-                servers: [
-                    'https://poke.tchncs.de',
-                    'https://poke.ggtyler.dev',
-                    'https://poke.privacydev.net'
-                ],
-                getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
-                parseResponse: (data) => {
-                    const streams = [];
-                    if (data.formatStreams) {
-                        data.formatStreams.forEach(s => {
-                            if (s.url) streams.push({ 
-                                url: s.url, 
-                                quality: s.qualityLabel || s.quality, 
-                                type: 'Poké',
-                                hasAudio: true
-                            });
-                        });
-                    }
-                    return streams;
-                }
-            },
-            {
-                name: 'Tubo',
-                servers: [
-                    'https://tubo.migalmoreno.com',
-                    'https://tubo.reallyaweso.me'
-                ],
-                getUrl: (server, videoId) => `${server}/api/streams/${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.videoStreams) return [];
-                    return data.videoStreams.map(s => ({
-                        url: s.url,
-                        quality: s.quality,
-                        type: 'Tubo',
-                        hasAudio: true
-                    }));
-                }
-            },
-            {
-                name: 'ViewTube',
-                servers: ['https://api.viewtube.io'],
-                getUrl: (server, videoId) => `${server}/videos/${videoId}`,
-                parseResponse: (data) => {
-                    if (!data.adaptiveFormats) return [];
-                    return data.adaptiveFormats
-                        .filter(f => f.mimeType && f.mimeType.includes('video') && f.url)
-                        .map(f => ({
-                            url: f.url,
-                            quality: f.qualityLabel || 'auto',
-                            type: 'ViewTube',
-                            hasAudio: false
-                        }));
-                }
-            },
-            {
-                name: 'FreeTube',
-                servers: [
-                    'https://api.freetube.app',
-                    'https://freetube-api.vercel.app'
-                ],
-                getUrl: (server, videoId) => `${server}/api/v1/videos/${videoId}`,
-                parseResponse: (
+                    const response = await fetch(invUrl, {
+                        signal: AbortSignal.timeout(10000)
+                    });
+
+                    if (response.ok) {
+                        const
