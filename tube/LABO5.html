@@ -710,6 +710,24 @@ video {
     let currentFormats = [];
     let currentVideoId = '';
 
+    const API_SOURCES = [
+      {
+        name: 'Primary API',
+        url: (videoId) => `https://yt-dl-test.vercel.app/dl/${encodeURIComponent(videoId)}`,
+        timeout: 10000
+      },
+      {
+        name: 'Backup API 1',
+        url: (videoId) => `https://api-backend-xbmv.onrender.com/api/dl/${encodeURIComponent(videoId)}`,
+        timeout: 12000
+      },
+      {
+        name: 'Backup API 2',
+        url: (videoId) => `https://min-tube-api-3.vercel.app/api/video/${encodeURIComponent(videoId)}`,
+        timeout: 12000
+      }
+    ];
+
     function stopVideo() {
       try { player.pause(); player.removeAttribute('src'); player.load(); } catch {}
     }
@@ -896,6 +914,29 @@ video {
       catch (e) { clearTimeout(id); throw e; }
     }
 
+    async function fetchVideoData(videoId) {
+      let lastError = null;
+      
+      for (const source of API_SOURCES) {
+        try {
+          console.log(`Trying ${source.name}...`);
+          const res = await fetchWithTimeout(source.url(videoId), {}, source.timeout);
+          const data = await res.json();
+          
+          if (data && (data.res_data || data.formats || data.adaptiveFormats)) {
+            console.log(`✓ Success with ${source.name}`);
+            return { data, source: source.name };
+          }
+        } catch (error) {
+          console.warn(`✗ ${source.name} failed:`, error.message);
+          lastError = error;
+          continue;
+        }
+      }
+      
+      throw lastError || new Error('All API sources failed');
+    }
+
     async function loadWatch(videoId) {
       currentVideoId = videoId;
       window.scrollTo({ top: 0, behavior: 'instant' });
@@ -913,80 +954,86 @@ video {
       
       loadingOverlay.classList.add('show');
 
-      let data = null;
+      let result = null;
       try { 
-        const res = await fetchWithTimeout(`https://yt-dl-test.vercel.app/dl/${encodeURIComponent(videoId)}`, {}, 10000); 
-        data = await res.json(); 
-      } catch { 
+        result = await fetchVideoData(videoId);
+      } catch (error) { 
         loadingOverlay.classList.remove('show');
         const vs = document.getElementById('video-status'); 
-        vs.textContent = 'ストリーム取得に失敗しました（10秒タイムアウト）。'; 
+        vs.textContent = `ストリーム取得に失敗しました: ${error.message}`; 
         vs.style.display = 'inline';
         badge.textContent = 'エラー';
         badge.className = 'chip error';
+        return;
       }
 
-      if (data && data.res_data) {
-        const d = data.res_data;
-        document.getElementById('video-title').textContent = d.title || '動画';
-        const vd = document.getElementById('video-duration'); vd.textContent = formatDuration(d.duration); vd.style.display = 'inline';
-        const vsrc = document.getElementById('video-source'); vsrc.textContent = d.source || 'YouTube'; vsrc.style.display = 'inline';
+      const data = result.data.res_data || result.data;
+      document.getElementById('video-title').textContent = data.title || '動画';
+      const vd = document.getElementById('video-duration'); 
+      vd.textContent = formatDuration(data.duration || data.lengthSeconds); 
+      vd.style.display = 'inline';
+      const vsrc = document.getElementById('video-source'); 
+      vsrc.textContent = result.source; 
+      vsrc.style.display = 'inline';
 
-        currentFormats = Array.isArray(d.formats) ? d.formats : [];
+      currentFormats = Array.isArray(data.formats) ? data.formats : 
+                       Array.isArray(data.adaptiveFormats) ? data.adaptiveFormats : [];
+      
+      const qualityOptions = [
+        { label: '144p', keywords: ['144p', '144', 'tiny'] },
+        { label: '240p', keywords: ['240p', '240', 'small'] },
+        { label: '360p', keywords: ['360p', '360', 'medium'] },
+        { label: '480p', keywords: ['480p', '480', 'large'] },
+        { label: '720p', keywords: ['720p', '720', 'hd720'] },
+        { label: '1080p', keywords: ['1080p', '1080', 'hd1080'] }
+      ];
+
+      const availableFormats = {};
+      currentFormats.forEach(f => {
+        const q = (f.quality || f.qualityLabel || '').toLowerCase();
+        const height = f.height || 0;
         
-        const qualityOptions = [
-          { label: '144p', keywords: ['144p', '144'] },
-          { label: '240p', keywords: ['240p', '240'] },
-          { label: '360p', keywords: ['360p', '360'] },
-          { label: '480p', keywords: ['480p', '480'] },
-          { label: '720p', keywords: ['720p', '720', 'hd720'] },
-          { label: '1080p', keywords: ['1080p', '1080', 'hd1080'] }
-        ];
-
-        const availableFormats = {};
-        currentFormats.forEach(f => {
-          const q = (f.quality || '').toLowerCase();
-          for (const opt of qualityOptions) {
-            if (opt.keywords.some(kw => q.includes(kw.toLowerCase()))) {
-              if (!availableFormats[opt.label] || f.url) {
-                availableFormats[opt.label] = f;
-              }
-              break;
+        for (const opt of qualityOptions) {
+          const heightMatch = parseInt(opt.label);
+          if (height === heightMatch || opt.keywords.some(kw => q.includes(kw.toLowerCase()))) {
+            if (!availableFormats[opt.label] || (f.url && !availableFormats[opt.label].url)) {
+              availableFormats[opt.label] = f;
             }
+            break;
           }
-        });
-
-        const selector = document.getElementById('quality-selector');
-        selector.innerHTML = '';
-        
-        let bestQuality = null;
-        let bestFormat = null;
-
-        qualityOptions.reverse().forEach(opt => {
-          if (availableFormats[opt.label]) {
-            const btn = document.createElement('button');
-            btn.className = 'quality-btn';
-            btn.textContent = opt.label;
-            btn.addEventListener('click', () => switchQuality(opt.label, availableFormats[opt.label]));
-            selector.appendChild(btn);
-            
-            if (!bestFormat) {
-              bestQuality = opt.label;
-              bestFormat = availableFormats[opt.label];
-            }
-          }
-        });
-
-        if (bestFormat && bestFormat.url) {
-          switchQuality(bestQuality, bestFormat);
-        } else {
-          loadingOverlay.classList.remove('show');
-          const vs = document.getElementById('video-status');
-          vs.textContent = '利用可能なストリームが見つかりませんでした。';
-          vs.style.display = 'inline';
-          badge.textContent = 'エラー';
-          badge.className = 'chip error';
         }
+      });
+
+      const selector = document.getElementById('quality-selector');
+      selector.innerHTML = '';
+      
+      let bestQuality = null;
+      let bestFormat = null;
+
+      qualityOptions.reverse().forEach(opt => {
+        if (availableFormats[opt.label]) {
+          const btn = document.createElement('button');
+          btn.className = 'quality-btn';
+          btn.textContent = opt.label;
+          btn.addEventListener('click', () => switchQuality(opt.label, availableFormats[opt.label]));
+          selector.appendChild(btn);
+          
+          if (!bestFormat) {
+            bestQuality = opt.label;
+            bestFormat = availableFormats[opt.label];
+          }
+        }
+      });
+
+      if (bestFormat && bestFormat.url) {
+        switchQuality(bestQuality, bestFormat);
+      } else {
+        loadingOverlay.classList.remove('show');
+        const vs = document.getElementById('video-status');
+        vs.textContent = '利用可能なストリームが見つかりませんでした。';
+        vs.style.display = 'inline';
+        badge.textContent = 'エラー';
+        badge.className = 'chip error';
       }
 
       loadComments(videoId);
