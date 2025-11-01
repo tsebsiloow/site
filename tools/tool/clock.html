@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>世界時計（検索＆リアルタイム）</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #0f172a;
+      color: #f1f5f9;
+      text-align: center;
+      padding: 30px;
+    }
+    h1 {
+      margin-bottom: 20px;
+      font-size: 2em;
+    }
+    input[type="text"] {
+      padding: 10px;
+      width: 250px;
+      border-radius: 5px;
+      border: none;
+      font-size: 1em;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    #count {
+      margin-bottom: 20px;
+      color: #a0aec0;
+      font-size: 0.9em;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+      max-width: 1200px;
+      margin: auto;
+    }
+    .clock {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      padding: 10px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      transition: opacity 0.2s;
+    }
+    .city {
+      font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 1em;
+    }
+    .time {
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>🌏 世界時計（検索＆リアルタイム）</h1>
+  <input type="text" id="search" placeholder="都市名で検索..." />
+  <div id="count"></div>
+  <div id="container" class="grid"></div>
+
+  <script>
+    const cities = [
+      ["東京", "Asia/Tokyo"], ["大阪", "Asia/Tokyo"], ["札幌", "Asia/Tokyo"],
+      ["ソウル", "Asia/Seoul"], ["北京", "Asia/Shanghai"], ["香港", "Asia/Hong_Kong"],
+      ["台北", "Asia/Taipei"], ["バンコク", "Asia/Bangkok"], ["シンガポール", "Asia/Singapore"],
+      ["クアラルンプール", "Asia/Kuala_Lumpur"], ["マニラ", "Asia/Manila"], ["ジャカルタ", "Asia/Jakarta"],
+      ["デリー", "Asia/Kolkata"], ["ムンバイ", "Asia/Kolkata"], ["カラチ", "Asia/Karachi"],
+      ["ドバイ", "Asia/Dubai"], ["アブダビ", "Asia/Dubai"], ["リヤド", "Asia/Riyadh"],
+      ["イスタンブール", "Europe/Istanbul"], ["エルサレム", "Asia/Jerusalem"], ["カイロ", "Africa/Cairo"],
+      ["ナイロビ", "Africa/Nairobi"], ["ヨハネスブルグ", "Africa/Johannesburg"], ["ラゴス", "Africa/Lagos"],
+      ["ロンドン", "Europe/London"], ["ダブリン", "Europe/Dublin"], ["リスボン", "Europe/Lisbon"],
+      ["マドリード", "Europe/Madrid"], ["パリ", "Europe/Paris"], ["ベルリン", "Europe/Berlin"],
+      ["ローマ", "Europe/Rome"], ["アムステルダム", "Europe/Amsterdam"], ["ブリュッセル", "Europe/Brussels"],
+      ["ストックホルム", "Europe/Stockholm"], ["オスロ", "Europe/Oslo"], ["ヘルシンキ", "Europe/Helsinki"],
+      ["プラハ", "Europe/Prague"], ["ウィーン", "Europe/Vienna"], ["ブダペスト", "Europe/Budapest"],
+      ["チューリッヒ", "Europe/Zurich"], ["ワルシャワ", "Europe/Warsaw"], ["アテネ", "Europe/Athens"],
+      ["モスクワ", "Europe/Moscow"], ["ドーハ", "Asia/Qatar"], ["クウェート", "Asia/Kuwait"],
+      ["テヘラン", "Asia/Tehran"], ["トビリシ", "Asia/Tbilisi"], ["バクー", "Asia/Baku"],
+      ["カブール", "Asia/Kabul"], ["タシケント", "Asia/Tashkent"], ["アルマトイ", "Asia/Almaty"],
+      ["ウランバートル", "Asia/Ulaanbaatar"], ["ハノイ", "Asia/Ho_Chi_Minh"], ["プノンペン", "Asia/Phnom_Penh"],
+      ["ヤンゴン", "Asia/Yangon"], ["コロンボ", "Asia/Colombo"], ["マレ", "Indian/Maldives"],
+      ["ダーウィン", "Australia/Darwin"], ["シドニー", "Australia/Sydney"], ["メルボルン", "Australia/Melbourne"],
+      ["ブリスベン", "Australia/Brisbane"], ["パース", "Australia/Perth"], ["オークランド", "Pacific/Auckland"],
+      ["ウェリントン", "Pacific/Auckland"], ["ホノルル", "Pacific/Honolulu"], ["アンカレッジ", "America/Anchorage"],
+      ["ロサンゼルス", "America/Los_Angeles"], ["サンフランシスコ", "America/Los_Angeles"], ["ラスベガス", "America/Los_Angeles"],
+      ["シアトル", "America/Los_Angeles"], ["デンバー", "America/Denver"], ["フェニックス", "America/Phoenix"],
+      ["ダラス", "America/Chicago"], ["ヒューストン", "America/Chicago"], ["シカゴ", "America/Chicago"],
+      ["ニューヨーク", "America/New_York"], ["ボストン", "America/New_York"], ["ワシントンDC", "America/New_York"],
+      ["トロント", "America/Toronto"], ["モントリオール", "America/Toronto"], ["メキシコシティ", "America/Mexico_City"],
+      ["ボゴタ", "America/Bogota"], ["リマ", "America/Lima"], ["サンティアゴ", "America/Santiago"],
+      ["ブエノスアイレス", "America/Argentina/Buenos_Aires"], ["リオデジャネイロ", "America/Sao_Paulo"], ["サンパウロ", "America/Sao_Paulo"],
+      ["モンテビデオ", "America/Montevideo"], ["カラカス", "America/Caracas"], ["ハバナ", "America/Havana"],
+      ["サンファン", "America/Puerto_Rico"], ["キングストン", "America/Jamaica"], ["ポートオブスペイン", "America/Port_of_Spain"],
+      ["マナウス", "America/Manaus"], ["ケープタウン", "Africa/Johannesburg"], ["カサブランカ", "Africa/Casablanca"],
+      ["アルジェ", "Africa/Algiers"], ["チュニス", "Africa/Tunis"], ["アクラ", "Africa/Accra"],
+      ["モンロビア", "Africa/Monrovia"], ["アディスアベバ", "Africa/Addis_Ababa"]
+    ];
+
+    const container = document.getElementById("container");
+    const searchBox = document.getElementById("search");
+    const countDisplay = document.getElementById("count");
+
+    // 都市ブロック生成
+    cities.forEach(([name, tz], i) => {
+      const div = document.createElement("div");
+      div.className = "clock";
+      div.setAttribute("data-name", name.toLowerCase());
+      div.setAttribute("data-tz", tz);
+      div.innerHTML = `<div class="city">${i + 1}. ${name}</div><div class="time" id="c${i}">--:--:--</div>`;
+      container.appendChild(div);
+    });
+
+    function updateClocks() {
+      const now = new Date();
+      document.querySelectorAll(".clock").forEach(clock => {
+        if(clock.style.display !== "none") {
+          const tz = clock.getAttribute("data-tz");
+          const time = new Intl.DateTimeFormat('ja-JP', {
+            timeZone: tz,
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          }).format(now);
+          clock.querySelector(".time").textContent = time;
+        }
+      });
+    }
+
+    setInterval(updateClocks, 1000);
+    updateClocks();
+
+    // 🔍 検索機能
+    searchBox.addEventListener("input", () => {
+      const keyword = searchBox.value.trim().toLowerCase();
+      const clocks = document.querySelectorAll(".clock");
+      let visibleCount = 0;
+
+      clocks.forEach(clock => {
+        const name = clock.getAttribute("data-name");
+        if (name.includes(keyword)) {
+          clock.style.display = "block";
+          visibleCount++;
+        } else {
+          clock.style.display = "none";
+        }
+      });
+
+      countDisplay.textContent = `表示中の都市数：${visibleCount} / ${cities.length}`;
+    });
+
+    // 初期カウント
+    countDisplay.textContent = `表示中の都市数：${cities.length} / ${cities.length}`;
+  </script>
+</body>
+</html>
