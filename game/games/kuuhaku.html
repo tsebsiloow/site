@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>記号内文字を &ensp; に変換（文字数保持）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+        }
+        #output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 50px;
+        }
+    </style>
+</head>
+<body>
+    <h1>記号内文字を &ensp; に変換（文字数保持）</h1>
+    <textarea id="inputText" placeholder="ここに文字を入力"></textarea><br>
+    <button onclick="convertSymbols()">変換</button>
+    <div id="output"></div>
+
+    <script>
+        function convertSymbols() {
+            let text = document.getElementById('inputText').value;
+
+            // 「」, [], (), {} 内の文字を &ensp; に置換（文字数保持）
+            let convertedText = text.replace(/「.*?」|\[.*?\]|\(.*?\)|\{.*?\}/g, function(match) {
+                // matchの文字数分だけ &ensp; を繰り返す
+                return '&ensp;'.repeat(match.length);
+            });
+
+            document.getElementById('output').innerHTML = convertedText;
+        }
+    </script>
+</body>
+</html>
