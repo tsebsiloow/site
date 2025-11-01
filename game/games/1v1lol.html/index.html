@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>リアルタイム1v1.lolクローン</title>
+<style>
+body { margin:0; overflow:hidden; background:#333; }
+canvas { display:block; margin:auto; background:#222; cursor:crosshair; }
+#scoreboard { position:absolute; top:10px; width:100%; display:flex; justify-content:space-between; color:white; font-size:20px; font-family:sans-serif; }
+</style>
+</head>
+<body>
+<div id="scoreboard">
+  <div id="scoreRed">Red: 0 | HP: 100</div>
+  <div id="scoreBlue">Blue: 0 | HP: 100</div>
+</div>
+<canvas id="gameCanvas" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+const gravity = 0.5, friction=0.8, speed=4, jumpPower=12, bulletSpeed=8, bulletSize=5, maxHP=100;
+let playerId, players = {}, redScore=0, blueScore=0;
+const keys = {};
+document.addEventListener('keydown', e=>keys[e.key]=true);
+document.addEventListener('keyup', e=>keys[e.key]=false);
+
+// マウス位置
+let mouseX=0, mouseY=0;
+canvas.addEventListener('mousemove', e=>{
+  const rect=canvas.getBoundingClientRect();
+  mouseX=e.clientX-rect.left;
+  mouseY=e.clientY-rect.top;
+});
+
+// WebSocket接続
+const ws = new WebSocket('ws://localhost:8080');
+ws.onmessage = (msg)=>{
+  const data = JSON.parse(msg.data);
+  if(data.type==='init'){ playerId=data.id; players=data.players; }
+  else if(data.type==='sync'){ players=data.players; }
+}
+
+// プラットフォーム
+const platforms = [
+  {x:0,y:580,w:800,h:20},{x:300,y:480,w:200,h:20},{x:150,y:380,w:200,h:20},{x:450,y:280,w:200,h:20}
+];
+
+// 射撃
+canvas.addEventListener('mousedown', ()=>shoot(playerId, mouseX, mouseY));
+
+function shoot(id,targetX,targetY){
+  const player = players[id]; 
+  if(!player) return;
+  if(player.canShoot===false) return;
+  player.canShoot=false;
+  const dx=targetX-(player.x+20/2), dy=targetY-(player.y+40/2);
+  const mag=Math.sqrt(dx*dx+dy*dy);
+  player.bullets.push({x:player.x+20/2, y:player.y+40/2, dx:(dx/mag)*bulletSpeed, dy:(dy/mag)*bulletSpeed});
+  setTimeout(()=>{player.canShoot=true; sendUpdate(player);}, 300);
+  sendUpdate(player);
+}
+
+// 衝突判定
+function rectCollision(r1,r2){ return r1.x<r2.x+r2.w && r1.x+r1.w>r2.x && r1.y<r2.y+r2.h && r1.y+r1.h>r2.y; }
+
+// プレイヤー操作更新
+function updatePlayer(player, up, down, left, right, jump){
+  if(keys[left]) player.dx=-speed;
+  else if(keys[right]) player.dx=speed;
+  else player.dx*=friction;
+
+  if(keys[jump] && player.onGround){ player.dy=-jumpPower; player.onGround=false; }
+
+  player.dy+=gravity;
+  player.x+=player.dx;
+  player.y+=player.dy;
+
+  player.onGround=false;
+  platforms.forEach(p=>{
+    if(rectCollision(player,p)){
+      if(player.dy>=0 && player.y+player.h-player.dy<=p.y){ player.y=p.y-player.h; player.dy=0; player.onGround=true; }
+      else if(player.dy<0 && player.y-player.dy>=p.y+p.h){ player.y=p.y+p.h; player.dy=0; }
+      else if(player.dx>0) player.x=p.x-player.w;
+      else if(player.dx<0) player.x=p.x+p.w;
+    }
+  });
+
+  if(player.x<0) player.x=0;
+  if(player.x+player.w>canvas.width) player.x=canvas.width-player.w;
+  if(player.y+player.h>canvas.height){ player.y=canvas.height-player.h; player.dy=0; player.onGround=true; }
+
+  sendUpdate(player);
+}
+
+// 弾更新
+function updateBullets(player, opponent){
+  if(!player) return;
+  player.bullets.forEach((b,i)=>{
+    b.x+=b.dx; b.y+=b.dy;
+    for(let p of platforms){ if(b.x>p.x && b.x<p.x+p.w && b.y>p.y && b.y<p.y+p.h){ player.bullets.splice(i,1); return; } }
+    if(opponent && b.x>opponent.x && b.x<opponent.x+opponent.w && b.y>opponent.y && b.y<opponent.y+opponent.h){
+      player.bullets.splice(i,1); opponent.hp-=20;
+      if(opponent.hp<=0){
+        if(opponent===players[Object.keys(players)[0]]) blueScore++; else redScore++;
+        opponent.hp=maxHP;
+        opponent.x=opponent===players[Object.keys(players)[0]]?100:700;
+        opponent.y=300;
+      }
+    }
+    if(b.x<0 || b.x>canvas.width || b.y<0 || b.y>canvas.height) player.bullets.splice(i,1);
+  });
+  sendUpdate(player);
+}
+
+// 描画
+function drawPlayer(player){
+  ctx.fillStyle=player.color; ctx.fillRect(player.x,player.y,player.w,player.h);
+  player.bullets.forEach(b=>{ ctx.fillStyle='yellow'; ctx.fillRect(b.x-bulletSize/2,b.y-bulletSize/2,bulletSize,bulletSize); });
+}
+function drawPlatforms(){ ctx.fillStyle='gray'; platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.w,p.h)); }
+function updateScore(){ document.getElementById('scoreRed').textContent=`Red: ${redScore} | HP: ${players[Object.keys(players)[0]]?.hp||100}`; document.getElementById('scoreBlue').textContent=`Blue: ${blueScore} | HP: ${players[Object.keys(players)[1]]?.hp||100}`; }
+function sendUpdate(player){ ws.send(JSON.stringify({ type:'update', state:player })); }
+
+function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const ids=Object.keys(players);
+  if(ids.length>=1) updatePlayer(players[ids[0]],'w','s','a','d',' ');
+  if(ids.length>=2) updatePlayer(players[ids[1]],'ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Shift');
+
+  if(ids.length>=1 && ids.length>=2) { updateBullets(players[ids[0]], players[ids[1]]); updateBullets(players[ids[1]], players[ids[0]]); }
+
+  drawPlatforms();
+  ids.forEach(id=>drawPlayer(players[id]));
+  updateScore();
+
+  requestAnimationFrame(gameLoop);
+}
+gameLoop();
+</script>
+</body>
+</html>
