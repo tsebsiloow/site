@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WOOLsite</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@500&display=swap');
+
+    body {
+      font-family: 'Noto Serif JP', serif;
+      background-color: #0d0d0d;
+      color: #f2e6b1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      background-image: radial-gradient(circle at center, rgba(255,255,255,0.05), transparent 70%),
+                        url('https://www.transparenttextures.com/patterns/dark-wood.png');
+      background-repeat: repeat;
+      background-size: cover;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 2.3rem;
+      margin-bottom: 40px;
+      letter-spacing: 3px;
+      text-shadow: 0 0 15px rgba(255, 215, 0, 0.3);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 25px;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #a30000, #d42a00);
+      color: #fdf5e6;
+      border: 2px solid #d4af37;
+      padding: 20px 0;
+      border-radius: 15px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-decoration: none;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.3);
+      transition: all 0.3s ease;
+      width: 150px;
+      text-align: center;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #d42a00, #ff4500);
+      color: #fff8dc;
+      transform: translateY(-4px);
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+    }
+
+    .footer {
+      position: absolute;
+      bottom: 20px;
+      font-size: 0.9rem;
+      color: #aaa;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <h1>和の心、九つの道</h1>
+
+  <div class="grid">
+    <a href="page1.html" class="btn">壱</a>
+    <a href="page2.html" class="btn">弐</a>
+    <a href="page3.html" class="btn">参</a>
+    <a href="page4.html" class="btn">肆</a>
+    <a href="page5.html" class="btn">伍</a>
+    <a href="page6.html" class="btn">陸</a>
+    <a href="page7.html" class="btn">漆</a>
+    <a href="page8.html" class="btn">捌</a>
+    <a href="page9.html" class="btn">玖</a>
+  </div>
+
+  <div class="footer">© 2025 woolisbest</div>
+</body>
+</html>
