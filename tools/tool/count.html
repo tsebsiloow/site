@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文字数カウンター＆コピー（上限設定可）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 50px;
+        }
+        textarea {
+            width: 100%;
+            height: 150px;
+            font-size: 16px;
+        }
+        .counter {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .counter span {
+            font-weight: normal;
+        }
+        button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .copy-notice {
+            margin-top: 10px;
+            color: white;
+            background-color: #4caf50;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        .copy-notice.show {
+            display: inline-block;
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <h1>文字数カウンター＆コピー（上限設定可）</h1>
+
+    <label for="maxLength">文字数上限を入力:</label>
+    <input type="number" id="maxLength" value="100" min="1" style="margin-bottom:10px;">
+
+    <textarea id="textInput" placeholder="ここに文字を入力してください..."></textarea>
+    <div class="counter">
+        文字数: <span id="charCount">0</span> / <span id="maxCount">100</span> 
+        （残り: <span id="remainingCount">100</span>）
+    </div>
+    <button id="copyButton">全てコピー</button>
+    <div id="copyNotice" class="copy-notice">コピー完了！</div>
+
+    <script>
+        const textInput = document.getElementById('textInput');
+        const charCount = document.getElementById('charCount');
+        const remainingCount = document.getElementById('remainingCount');
+        const maxCount = document.getElementById('maxCount');
+        const maxLengthInput = document.getElementById('maxLength');
+        const copyButton = document.getElementById('copyButton');
+        const copyNotice = document.getElementById('copyNotice');
+
+        // 初期上限
+        let maxLength = parseInt(maxLengthInput.value);
+        maxCount.textContent = maxLength;
+        remainingCount.textContent = maxLength;
+
+        // 文字数カウント更新関数
+        function updateCount() {
+            let text = textInput.value;
+
+            // 上限を超えたら切り捨て
+            if (text.length > maxLength) {
+                text = text.slice(0, maxLength);
+                textInput.value = text;
+            }
+
+            charCount.textContent = text.length;
+            remainingCount.textContent = maxLength - text.length;
+        }
+
+        // 文字数カウント
+        textInput.addEventListener('input', updateCount);
+
+        // 上限値変更時
+        maxLengthInput.addEventListener('input', () => {
+            maxLength = parseInt(maxLengthInput.value) || 1;
+            maxCount.textContent = maxLength;
+            updateCount();
+        });
+
+        // コピー機能
+        copyButton.addEventListener('click', () => {
+            textInput.select();
+            textInput.setSelectionRange(0, 99999); // モバイル対応
+            navigator.clipboard.writeText(textInput.value)
+                .then(() => {
+                    copyNotice.classList.add('show');
+                    setTimeout(() => {
+                        copyNotice.classList.remove('show');
+                    }, 2000);
+                })
+                .catch(err => {
+                    alert('コピーに失敗しました: ' + err);
+                });
+        });
+    </script>
+</body>
+</html>
