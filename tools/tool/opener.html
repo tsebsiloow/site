@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>複数URLオープナー（件数確認）</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 50px;
+            text-align: center;
+        }
+        textarea {
+            width: 400px;
+            height: 150px;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>複数URLオープナー</h1>
+    <p>URLを改行またはカンマで区切って入力してください:</p>
+    <textarea id="urlInput" placeholder="https://example.com&#10;https://google.com"></textarea><br>
+    <button onclick="openURLs()">すべて開く</button>
+    <button onclick="copyURLs()">まとめてコピー</button>
+
+    <script>
+        // 入力値を配列化
+        function getURLs() {
+            const input = document.getElementById('urlInput').value.trim();
+            if (!input) return [];
+            return input.split(/[\n,]+/).map(url => url.trim()).filter(url => url !== "");
+        }
+
+        // 新しいタブで開く（件数確認ダイアログ）
+        function openURLs() {
+            const urls = getURLs();
+            if (urls.length === 0) {
+                alert("URLを入力してください！");
+                return;
+            }
+            // 件数だけ表示して確認
+            if (!confirm(`合計 ${urls.length} 件のURLをすべて開きますか？`)) {
+                return; // キャンセルされた場合は何もしない
+            }
+            urls.forEach(url => {
+                const fullURL = url.startsWith('http://') || url.startsWith('https://') ? url : 'https://' + url;
+                window.open(fullURL, '_blank');
+            });
+        }
+
+        // まとめてコピー
+        function copyURLs() {
+            const urls = getURLs();
+            if (urls.length === 0) {
+                alert("URLを入力してください！");
+                return;
+            }
+            const fullURLs = urls.map(url => url.startsWith('http://') || url.startsWith('https://') ? url : 'https://' + url);
+            navigator.clipboard.writeText(fullURLs.join('\n'))
+                .then(() => {
+                    alert("URLをクリップボードにコピーしました！");
+                })
+                .catch(err => {
+                    alert("コピーに失敗しました: " + err);
+                });
+        }
+    </script>
+</body>
+</html>
