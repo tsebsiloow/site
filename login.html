@@ -73,11 +73,24 @@
         </div>
       </div>
     </div>
-  </div>
+  </div><!--
   <script>
     
     const correctPassword = "PcGkG6cqrIQBvkbxwVWWjSXAITQcMMXrLDMI0CcWJ0FDwgkPTh6mSPEiKbLbp7mmmRJE5RcFguwPlwXR2MMxLXrAuUcSJMUHbOMmQYmrbmsotwBz6h94TnaiFiwuylXu";
+-->
+    <script>
+    let correctPassword = "";
 
+    // password.jsonから認証コードを取得
+    fetch('password.json')
+      .then(response => response.json())
+      .then(data => {
+        correctPassword = data.password;
+      })
+      .catch(error => {
+        console.error('パスワードファイルの読み込みに失敗しました:', error);
+      });
+    
     const lang = {
       ja: {
         title: "統合学習支援ポータル",
