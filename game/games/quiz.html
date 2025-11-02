@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>クイズ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #d4ed91; /* 背景を黄緑色に変更 */
+            margin: 0;
+            padding: 20px;
+        }
+        .quiz-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            margin: auto;
+        }
+        .question {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .choices {
+            list-style-type: none;
+            padding: 0;
+        }
+        .choices li {
+            margin: 10px 0;
+        }
+        .result {
+            font-size: 20px;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .btn {
+            margin-top: 20px;
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    <h1>クイズ: 日本の文化</h1>
+
+    <div class="question">日本の国技は何ですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question1" value="sumo"> 相撲</li>
+        <li><input type="radio" name="question1" value="baseball"> 野球</li>
+        <li><input type="radio" name="question1" value="kendo"> 剣道</li>
+        <li><input type="radio" name="question1" value="judo"> 柔道</li>
+    </ul>
+
+    <div class="question">東京タワーは何メートルの高さですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question2" value="333"> 333メートル</li>
+        <li><input type="radio" name="question2" value="200"> 200メートル</li>
+        <li><input type="radio" name="question2" value="450"> 450メートル</li>
+        <li><input type="radio" name="question2" value="400"> 400メートル</li>
+    </ul>
+
+    <div class="question">富士山の標高はどのくらいですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question3" value="3776"> 3776メートル</li>
+        <li><input type="radio" name="question3" value="3400"> 3400メートル</li>
+        <li><input type="radio" name="question3" value="4000"> 4000メートル</li>
+        <li><input type="radio" name="question3" value="3500"> 3500メートル</li>
+    </ul>
+
+    <div class="question">日本の最長の川はどれですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question4" value="shinano"> 信濃川</li>
+        <li><input type="radio" name="question4" value="yodo"> 淀川</li>
+        <li><input type="radio" name="question4" value="kiso"> 木曽川</li>
+        <li><input type="radio" name="question4" value="tone"> 利根川</li>
+    </ul>
+
+    <div class="question">日本の天皇が即位する際の儀式の名前は何ですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question5" value="sokui"> 即位礼</li>
+        <li><input type="radio" name="question5" value="kōshō"> 公正</li>
+        <li><input type="radio" name="question5" value="shukujitsu"> 祝日</li>
+        <li><input type="radio" name="question5" value="kenshō"> 検証</li>
+    </ul>
+
+    <div class="question">日本で最も古い神社はどれですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question6" value="izumo"> 出雲大社</li>
+        <li><input type="radio" name="question6" value="kashima"> 鹿島神宮</li>
+        <li><input type="radio" name="question6" value="meiji"> 明治神宮</li>
+        <li><input type="radio" name="question6" value="nara"> 奈良県の春日大社</li>
+    </ul>
+
+    <div class="question">日本の最古の木造建築はどれですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question7" value="horyuji"> 法隆寺</li>
+        <li><input type="radio" name="question7" value="kinkakuji"> 金閣寺</li>
+        <li><input type="radio" name="question7" value="shitennoji"> 四天王寺</li>
+        <li><input type="radio" name="question7" value="toji"> 東寺</li>
+    </ul>
+
+    <div class="question">日本の最南端の島はどれですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question8" value="okinoerabu"> 沖永良部島</li>
+        <li><input type="radio" name="question8" value="nishinoshima"> 西之島</li>
+        <li><input type="radio" name="question8" value="minami"> 南鳥島</li>
+        <li><input type="radio" name="question8" value="yaku"> 屋久島</li>
+    </ul>
+
+    <div class="question">日本の公式言語は何ですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question9" value="japanese"> 日本語</li>
+        <li><input type="radio" name="question9" value="english"> 英語</li>
+        <li><input type="radio" name="question9" value="chinese"> 中国語</li>
+        <li><input type="radio" name="question9" value="korean"> 韓国語</li>
+    </ul>
+
+    <div class="question">日本の総理大臣は誰ですか？</div>
+    <ul class="choices">
+        <li><input type="radio" name="question10" value="kishida"> 岸田文雄</li>
+        <li><input type="radio" name="question10" value="abe"> 安倍晋三</li>
+        <li><input type="radio" name="question10" value="suga"> 菅義偉</li>
+        <li><input type="radio" name="question10" value="mori"> 森喜朗</li>
+    </ul>
+
+    <button class="btn" onclick="checkAnswers()">結果を確認する</button>
+    
+    <div class="result" id="result"></div>
+</div>
+
+<script>
+    function checkAnswers() {
+        let score = 0;
+        
+        // 問題1のチェック
+        const answer1 = document.querySelector('input[name="question1"]:checked');
+        if (answer1 && answer1.value === "sumo") {
+            score++;
+        }
+
+        // 問題2のチェック
+        const answer2 = document.querySelector('input[name="question2"]:checked');
+        if (answer2 && answer2.value === "333") {
+            score++;
+        }
+
+        // 問題3のチェック
+        const answer3 = document.querySelector('input[name="question3"]:checked');
+        if (answer3 && answer3.value === "3776") {
+            score++;
+        }
+
+        // 問題4のチェック
+        const answer4 = document.querySelector('input[name="question4"]:checked');
+        if (answer4 && answer4.value === "shinano") {
+            score++;
+        }
+
+        // 問題5のチェック
+        const answer5 = document.querySelector('input[name="question5"]:checked');
+        if (answer5 && answer5.value === "sokui") {
+            score++;
+        }
+
+        // 問題6のチェック
+        const answer6 = document.querySelector('input[name="question6"]:checked');
+        if (answer6 && answer6.value === "izumo") {
+            score++;
+        }
+
+        // 問題7のチェック
+        const answer7 = document.querySelector('input[name="question7"]:checked');
+        if (answer7 && answer7.value === "horyuji") {
+            score++;
+        }
+
+        // 問題8のチェック
+        const answer8 = document.querySelector('input[name="question8"]:checked');
+        if (answer8 && answer8.value === "minami") {
+            score++;
+        }
+
+        // 問題9のチェック
+        const answer9 = document.querySelector('input[name="question9"]:checked');
+        if (answer9 && answer9.value === "japanese") {
+            score++;
+        }
+
+        // 問題10のチェック
+        const answer10 = document.querySelector('input[name="question10"]:checked');
+        if (answer10 && answer10.value === "kishida") {
+            score++;
+        }
+
+        // 結果の表示
+        const resultText = score === 10 ? "全問正解です！おめでとう！" : "残念、不正解です。";
+        document.getElementById("result").innerText = resultText + " あなたのスコアは " + score + " / 10 です。";
+    }
+</script>
+
+</body>
+</html>
