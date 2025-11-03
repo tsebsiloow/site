@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wool-Tube</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <button class="theme-toggle" id="themeToggle">🌙</button>
+    
+    <div class="container">
+        <h1>
+            <div class="logo">🐑</div>
+            Wool-Tube
+        </h1>
+        
+        <div class="search-box">
+            <div class="input-group">
+                <select id="apiKeySelect">
+                    <option value="">YouTube Data API Key を選択（オプション）</option>
+                    <option value="AIzaSyCz7f0X_giaGyC9u1EfGZPBuAC9nXiL5Mo">API Key 1</option>
+                    <option value="AIzaSyBmzCw7-sX1vm-uL_u2Qy3LuVZuxye4Wys">API Key 2</option>
+                    <option value="custom">カスタムAPIキーを入力...</option>
+                </select>
+            </div>
+            <div class="input-group" id="customKeyInput" style="display: none;">
+                <input type="text" id="apiKey" placeholder="カスタムGoogle API Keyを入力">
+            </div>
+            <div class="input-group">
+                <input type="text" id="searchQuery" placeholder="検索キーワードまたはYouTube URLを入力">
+                <button id="searchBtn">🔍 検索</button>
+            </div>
+            <div class="search-history" id="searchHistory"></div>
+            <div class="api-note">
+                ※YouTube Data API Keyを選択すると、より正確な検索結果が得られます<br>
+                APIキーなしの場合は、Invidious API で検索します
+            </div>
+        </div>
+
+        <div class="player-section" id="playerSection" style="display: none;">
+            <div id="currentVideo"></div>
+            <div id="playerContainer">
+                <iframe id="player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <div class="stats-overlay" id="statsOverlay"></div>
+            </div>
+            <div class="controls">
+                <button id="btnStream">🎬 ストリーム再生</button>
+                <button id="btnEmbed">📺 埋め込み再生</button>
+                <button id="btnNoCookie">🍪 No Cookie</button>
+                <button id="btnLoop">🔁 リピート: OFF</button>
+            </div>
+            <div class="speed-controls">
+                <span style="color: #333; font-size: 12px; margin-right: 10px;">再生速度:</span>
+                <button class="speed-btn" data-speed="0.5">0.5x</button>
+                <button class="speed-btn" data-speed="0.75">0.75x</button>
+                <button class="speed-btn active" data-speed="1">1x</button>
+                <button class="speed-btn" data-speed="1.25">1.25x</button>
+                <button class="speed-btn" data-speed="1.5">1.5x</button>
+                <button class="speed-btn" data-speed="2">2x</button>
+                <button class="speed-btn pip-btn" id="btnPip">📺 PiP</button>
+                <button class="speed-btn fullscreen-btn" id="btnFullscreen">⛶ 全画面</button>
+                <button class="speed-btn" id="btnStats">📊 統計</button>
+            </div>
+            <div class="controls">
+                <button id="btnDownloadVideo">📥 動画DL (MP4)</button>
+                <button id="btnDownloadAudio">🎵 音声DL (MP3)</button>
+            </div>
+            <div class="download-progress" id="downloadProgress">
+                <div class="progress-text" id="progressText">ダウンロード準備中...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+            <div class="quality-controls" id="qualityControls" style="display: none;"></div>
+            <div class="stream-url" id="streamUrl"></div>
+            <div class="debug-toggle">
+                <button id="btnDebugToggle">🐛 デバッグログ表示/非表示</button>
+            </div>
+            <div id="debugLog"></div>
+        </div>
+
+        <div id="loading" class="loading" style="display: none;">読み込み中...</div>
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="info" class="info" style="display: none;"></div>
+        
+        <div class="results" id="results"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="storage.js"></script>
+    <script src="api.js"></script>
+    <script src="player.js"></script>
+    <script src="ui.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
