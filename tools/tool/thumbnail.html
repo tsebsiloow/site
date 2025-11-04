@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube サムネイルダウンローダー</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f9f9f9;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      color: #cc0000;
+    }
+    input[type="text"] {
+      width: 80%;
+      max-width: 500px;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    button {
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #cc0000;
+      color: white;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ff0000;
+    }
+    img {
+      margin-top: 20px;
+      max-width: 90%;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    a.download-link {
+      display: inline-block;
+      margin-top: 15px;
+      background: #008CBA;
+      color: white;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    a.download-link:hover {
+      background: #006f99;
+    }
+  </style>
+</head>
+<body>
+  <h1>YouTube サムネイルダウンローダー</h1>
+  <p>動画のURLを入力してください👇</p>
+  <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=xxxxxxxxxxx">
+  <br>
+  <button onclick="getThumbnail()">サムネイルを取得</button>
+
+  <div id="result"></div>
+
+  <script>
+    function getThumbnail() {
+      const url = document.getElementById("youtube-url").value.trim();
+      const resultDiv = document.getElementById("result");
+      resultDiv.innerHTML = "";
+
+      // YouTubeの動画IDを抽出
+      const regex = /(?:v=|youtu\.be\/|shorts\/)([a-zA-Z0-9_-]{11})/;
+      const match = url.match(regex);
+
+      if (!match) {
+        resultDiv.innerHTML = "<p style='color:red;'>❌ 無効なYouTube URLです。</p>";
+        return;
+      }
+
+      const videoId = match[1];
+      const thumbnailUrls = [
+        `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+        `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`
+      ];
+
+      // まず高画質(maxres)を試し、失敗したら標準画質(hq)にフォールバック
+      const img = new Image();
+      img.src = thumbnailUrls[0];
+      img.onload = () => {
+        showThumbnail(thumbnailUrls[0]);
+      };
+      img.onerror = () => {
+        showThumbnail(thumbnailUrls[1]);
+      };
+
+      function showThumbnail(thumbnailUrl) {
+        resultDiv.innerHTML = `
+          <h3>サムネイル画像：</h3>
+          <img src="${thumbnailUrl}" alt="YouTube Thumbnail">
+          <br>
+          <a class="download-link" href="${thumbnailUrl}" download="thumbnail.jpg">⬇ ダウンロード</a>
+        `;
+      }
+    }
+  </script>
+</body>
+</html>
