@@ -100,7 +100,7 @@ wooltube/
 
 ## 📄 ライセンス
 
-MIT License
+AGPL-3.0 license
 
 ## ⚠️ 免責事項
 
@@ -108,6 +108,6 @@ MIT License
 
 ## 🔗 リンク
 
-- [Invidious](https://invidious.io)
-- [Piped](https://piped.video)
-- [Render](https://render.com)
+- [padlet](https://padlet.com/woolisbest/open)
+- [googlesite](https://sites.google.com)
+- [お題箱](https://odaibako.net/u/woolisbest)
