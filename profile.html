@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>woolisbest - プロフィール</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4a148c 0%, #880e4f 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .profile-card {
+            background: #2d1b4e;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.8s ease;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .avatar {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 30px rgba(74, 20, 140, 0.4);
+            overflow: hidden;
+        }
+        
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffffff;
+            margin-bottom: 10px;
+        }
+        
+        .age {
+            font-size: 18px;
+            color: #b8a3d6;
+        }
+        
+        .section {
+            margin: 25px 0;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #d4b3ff;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #4a148c 0%, #880e4f 100%);
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        
+        .hobby-tag {
+            display: inline-block;
+            background: linear-gradient(135deg, #4a148c 0%, #880e4f 100%);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 16px;
+            margin: 5px;
+            box-shadow: 0 4px 15px rgba(74, 20, 140, 0.3);
+        }
+        
+        .platforms {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .platform-item {
+            background: #3d2a5f;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+            color: #ffffff;
+        }
+        
+        .platform-item:hover {
+            background: linear-gradient(135deg, #4a148c 0%, #880e4f 100%);
+            color: white;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(74, 20, 140, 0.3);
+        }
+        
+        .platform-icon {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        
+        .platform-name {
+            font-weight: bold;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="profile-card">
+        <div class="header">
+            <div class="avatar">
+                <img src="https://woolisbest.lema.cl/img/icon.png" alt="woolisbest">
+            </div>
+            <h1 class="name">woolisbest</h1>
+            <p class="age">14歳</p>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">趣味・スキル</h2>
+            <div>
+                <span class="hobby-tag">💻 ウェブ開発</span>
+                <span class="hobby-tag">⚡ JavaScript</span>
+                <span class="hobby-tag">🎨 HTML・CSS</span>
+                <span class="hobby-tag">🔧 プロキシ作成</span>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">活動場所</h2>
+            <div class="platforms">
+                <div class="platform-item">
+                  <a href="https://discord.com">
+                    <div class="platform-icon">💬</div>
+                    <div class="platform-name">Discord</div>
+                  </a>
+                </div>
+                <div class="platform-item">
+                  <a href="https://padlet.com/woolisbest/open">
+                    <div class="platform-icon">📝</div>
+                    <div class="platform-name">Padlet</div>
+                  </a>
+                </div>
+                <div class="platform-item">
+                  <a href="https://odaibako.net/u/woolisbest">
+                    <div class="platform-icon">📮</div>
+                    <div class="platform-name">お題箱</div>
+                  </a>
+                </div>
+                <div class="platform-item">
+                  <a href="https://scratch.mit.edu">
+                    <div class="platform-icon">🐱</div>
+                    <div class="platform-name">Scratch</div>
+                  </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <h2 class="section-title">今後の予定</h2>
+            <div style="color: #e0d4f7; line-height: 1.8;">
+                <div style="margin-bottom: 15px;">
+                    <strong style="color: #d4b3ff; font-size: 18px;">📅 11月</strong>
+                </div>
+                <div style="margin-left: 20px;">
+                    <div style="margin-bottom: 10px;">
+                        🎬 wool-tube-proに画質選択機能を追加
+                    </div>
+                    <div>
+                        🌐 wool-siteを公開
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
