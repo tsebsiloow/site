@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>統合 仮想マシン コンソール</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ==== 全体テーマ ==== */
+:root {
+  --bg-dark: #0e1117;
+  --panel-dark: #161b22;
+  --text-dark: #c9d1d9;
+  --accent: #00ffc8;
+  --accent2: #0074ff;
+  --muted-dark: #8b949e;
+  --shadow: rgba(0,0,0,0.6);
+  --radius: 10px;
+}
+[data-theme="light"] {
+  --bg-dark: #f5f5f7;
+  --panel-dark: #ffffff;
+  --text-dark: #111;
+  --muted-dark: #555;
+  --shadow: rgba(0,0,0,0.1);
+}
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: radial-gradient(circle at 30% 20%, #111 0%, #000 100%);
+  color: var(--text-dark);
+  padding: 30px;
+  margin: 0;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  background: var(--panel-dark);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 25px var(--shadow);
+  padding: 25px;
+  transition: background 0.3s ease, box-shadow 0.3s ease;
+}
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+h1 {
+  color: var(--accent);
+  font-size: 20px;
+  margin: 0;
+  letter-spacing: 1px;
+}
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+.theme-toggle:hover {
+  background: var(--accent);
+  color: #000;
+}
+.status {
+  background: rgba(255,255,255,0.05);
+  padding: 12px 16px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 12px;
+}
+.status strong { color: var(--accent); }
+.small { font-size: 12px; color: var(--muted-dark); }
+.controls {
+  display: flex;
+  gap: 10px;
+  margin: 14px 0;
+}
+.controls button {
+  flex: 1;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border: none;
+  border-radius: var(--radius);
+  color: #000;
+  font-weight: 700;
+  padding: 10px 14px;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+  transition: all 0.2s ease;
+}
+.controls button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.3);
+}
+.controls button:active { transform: translateY(1px); }
+.terminal {
+  background: #000;
+  color: #00ff90;
+  padding: 16px;
+  border-radius: var(--radius);
+  height: 400px;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.4;
+  border: 1px solid #111;
+  box-shadow: inset 0 0 10px rgba(0,255,140,0.15);
+  white-space: pre-wrap;
+}
+.input-row {
+  display: flex;
+  margin-top: 10px;
+  gap: 8px;
+}
+input[type="text"] {
+  flex: 1;
+  background: var(--panel-dark);
+  color: var(--text-dark);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: var(--radius);
+  padding: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  transition: border 0.2s ease;
+}
+input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+button#runBtn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+button#runBtn:hover {
+  background: var(--accent2);
+  color: #fff;
+}
+.tip {
+  color: var(--muted-dark);
+  margin-top: 8px;
+  font-size: 12px;
+  text-align: center;
+}
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 5px; }
+.fadeIn { animation: fadeIn 0.4s ease; }
+@keyframes fadeIn { from {opacity:0; transform: translateY(8px);} to {opacity:1; transform: translateY(0);} }
+</style>
+</head>
+
+<body>
+<div class="wrap fadeIn">
+  <header>
+    <h1>💻 統合 仮想マシン コンソール</h1>
+    <button class="theme-toggle" onclick="toggleTheme()">🌙 / ☀</button>
+  </header>
+
+  <div class="status">
+    仮想マシン名：<strong id="vmName">UbuntuVM</strong>　
+    状態：<strong id="vmState" style="color:red">停止中</strong><br>
+    <span class="small">ユーザー: <span id="currentUser">user</span>　カレント: <span id="cwd">/home/user</span></span>
+  </div>
+
+  <div class="controls">
+    <button onclick="startVM()">起動</button>
+    <button onclick="stopVM()">停止</button>
+    <button onclick="restartVM()">再起動</button>
+    <button onclick="appendTerminal(helpText)">ヘルプ</button>
+  </div>
+
+  <div id="terminal" class="terminal">
+    仮想マシン ターミナル — コマンドを入力してください。`startvm` で開始。
+  </div>
+
+  <div class="input-row">
+    <input id="commandInput" placeholder="例: ls, speedgraph live, dashboard start" onkeydown="handleKey(event)" disabled />
+    <button id="runBtn" onclick="onRun()" disabled>実行</button>
+  </div>
+
+  <div class="tip">
+    Tips: tail -f /var/log/syslog, dashboard start, speedtest, nettop, notify info Hello!
+  </div>
+</div>
+
+<script>
+/* ==============================
+   仮想ファイルシステム
+============================== */
+const fileSystem = {
+  "/": ["home", "var", "etc"],
+  "/home": ["user"],
+  "/home/user": ["Documents", "Pictures", "notes.txt"],
+  "/home/user/Documents": ["project.txt", "todo.md"],
+  "/home/user/Pictures": ["screenshot.png", "wallpaper.jpg"],
+  "/var": ["log"],
+  "/var/log": ["syslog", "kernel.log"],
+  "/etc": ["config.sys", "hosts"],
+};
+let currentPath = "/home/user";
+
+function listDir(path, detailed = false) {
+  const files = fileSystem[path] || [];
+  if (detailed) {
+    return files
+      .map(f => `-rw-r--r--  1 user  user  1024  ${new Date().toLocaleDateString()}  ${f}`)
+      .join("\n");
+  }
+  return files.join("  ");
+}
+function changeDir(dir) {
+  if (!dir) return "移動先を指定してください。";
+  if (dir === "..") {
+    if (currentPath === "/") return "/";
+    currentPath = currentPath.split("/").slice(0, -1).join("/") || "/";
+  } else {
+    const newPath = dir.startsWith("/") ? dir : (currentPath === "/" ? `/${dir}` : `${currentPath}/${dir}`);
+    if (fileSystem[newPath]) {
+      currentPath = newPath;
+    } else {
+      return `ディレクトリが存在しません: ${dir}`;
+    }
+  }
+  updateCwd();
+  return "";
+}
+function getCurrentPath() { return currentPath; }
+function readFile(path) {
+  if (!path) return "使用法: cat <ファイル名>";
+  const fullPath = path.startsWith("/") ? path : `${currentPath}/${path}`;
+  const parts = fullPath.split("/");
+  const fileName = parts.pop();
+  const dirPath = parts.join("/") || "/";
+  if (!fileSystem[dirPath] || !fileSystem[dirPath].includes(fileName))
+    return `ファイルが見つかりません: ${path}`;
+  const examples = {
+    "notes.txt": "これは仮想Linux環境のメモファイルです。",
+    "project.txt": "Project Alpha — 開発中",
+    "syslog": "[INFO] 仮想システム起動完了",
+    "kernel.log": "[BOOT] Kernel loaded OK",
+  };
+  return examples[fileName] || `${fileName}: 空のファイルです。`;
+}
+function handleFSCommand(cmd, args) {
+  switch (cmd) {
+    case "ls": return listDir(getCurrentPath(), args.includes("-l"));
+    case "cd": return changeDir(args[0] || "/");
+    case "cat": return readFile(args[0]);
+    default: return null;
+  }
+}
+
+/* ==============================
+   ターミナル本体
+============================== */
+let vmRunning = false;
+const terminal = document.getElementById("terminal");
+const vmState = document.getElementById("vmState");
+const input = document.getElementById("commandInput");
+const runBtn = document.getElementById("runBtn");
+const helpText = "使用可能コマンド例:\nhelp, ls, cd, cat, speedtest, dashboard start, notify info Hello!";
+
+function updateCwd(){ document.getElementById("cwd").textContent = getCurrentPath(); }
+function appendTerminal(text){ terminal.textContent += "\n" + text; terminal.scrollTop = terminal.scrollHeight; }
+function setCommandEnabled(e){ input.disabled=!e; runBtn.disabled=!e; }
+
+function startVM(){ if(vmRunning)return appendTerminal("VMはすでに起動中。"); vmRunning=true; vmState.textContent="稼働中"; vmState.style.color="lime"; appendTerminal("仮想マシンを起動しました。"); setCommandEnabled(true); }
+function stopVM(){ if(!vmRunning)return appendTerminal("VMは停止中です。"); vmRunning=false; vmState.textContent="停止中"; vmState.style.color="red"; appendTerminal("仮想マシンを停止しました。"); setCommandEnabled(false); }
+function restartVM(){ if(!vmRunning)return appendTerminal("停止中です。"); appendTerminal("再起動中..."); setTimeout(()=>appendTerminal("再起動完了。"),1000); }
+
+function handleKey(e){ if(e.key==="Enter") onRun(); }
+function onRun(){ const v=input.value.trim(); if(!v)return; appendTerminal("> "+v); input.value=""; runCommand(v); }
+
+function runCommand(line){
+  if(!vmRunning)return appendTerminal("startvm で起動してください。");
+  const [cmd,...args]=line.trim().split(" ");
+  const fsOut=handleFSCommand(cmd,args);
+  if(fsOut!==null){ appendTerminal(fsOut); updateCwd(); return; }
+  switch(cmd){
+    case "help": appendTerminal(helpText); break;
+    case "startvm": startVM(); break;
+    case "stopvm": stopVM(); break;
+    case "restartvm": restartVM(); break;
+    case "speedtest": appendTerminal("Speedtest...\nPing: 20ms\nDownload: 92.3 Mbps\nUpload: 31.2 Mbps"); break;
+    case "dashboard": appendTerminal("📊 仮想ダッシュボード起動中... CPU:42% MEM:61%"); break;
+    case "notify": appendTerminal("🔔 通知送信: "+args.join(" ")); break;
+    default: appendTerminal("コマンドが見つかりません: "+cmd);
+  }
+}
+function toggleTheme(){
+  const cur=document.documentElement.getAttribute("data-theme")||"dark";
+  const next=cur==="light"?"dark":"light";
+  document.documentElement.setAttribute("data-theme",next);
+}
+appendTerminal("統合ターミナル 初期化完了 — 'startvm' を入力して開始。");
+</script>
+</body>
+</html>
