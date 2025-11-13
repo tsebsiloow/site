@@ -1,35 +1,254 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTMLを取得</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center transition-colors duration-300">
-  <div class="w-full max-w-md p-8 bg-gray-800 rounded-xl shadow-xl">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600 mb-6">HTMLを取得</h1>
-      <p class="text-gray-400 mb-8">ウェブサイトのhtmlを取得して、確認できます。</p>
-      <input type="text" id="searchBar" placeholder="URLを入力" class="w-full p-4 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6 placeholder-gray-400 transition duration-300 hover:bg-gray-600">
-      <button id="redirectButton" class="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 transition duration-200 ease-in-out">
-        URLを取得
-      </button>
-      <p class="mt-6 text-sm text-gray-400">サイトによっては、UIが壊れることがあります。また、X-Frame-OptionsヘッダーやCSP設定で取得できない場合があります。</p>
-    </div>
-  </div>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>マルチ言語プロキシコードビューア（DL＋コピー対応）</title>
 
-  <script>
-    document.getElementById('redirectButton').addEventListener('click', () => {
-      const url = document.getElementById('searchBar').value.trim(); // サーチバーからURLを取得
-      if (!url) {
-        alert('URLを入力してください');
-        return;
-      }
-      const replacedUrl = url.replace(/\./g, '.wakame02.');
-      const redirectUrl = `/tools/html/gethtml/${encodeURIComponent(replacedUrl)}`;
-      window.location.href = redirectUrl;
-    });
-  </script>
+<!-- PrismJS ハイライト -->
+<link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-css.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-xml-doc.min.js"></script>
+
+<style>
+body{
+  font-family:system-ui,monospace;
+  background:#0f172a;
+  color:#f8fafc;
+  margin:0;
+}
+header{
+  background:#1e293b;
+  padding:10px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  position:sticky;
+  top:0;
+  z-index:10;
+}
+input,select,button{
+  padding:8px;
+  border-radius:6px;
+}
+input{
+  flex:1;
+  border:1px solid #334155;
+  background:#1e293b;
+  color:#f8fafc;
+}
+button{
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  cursor:pointer;
+  transition:0.2s;
+}
+button:hover{
+  background:#1d4ed8;
+}
+select{
+  background:#1e293b;
+  color:#f8fafc;
+  border:1px solid #334155;
+}
+#codeBox{
+  position:relative;
+}
+pre{
+  margin:0;
+  padding:16px;
+  height:auto;
+  overflow:auto;
+  font-size:14px;
+  line-height:1.5;
+  transition:max-height 0.3s ease;
+}
+#toggleFold, #downloadBtn, #copyBtn{
+  position:absolute;
+  top:10px;
+  z-index:5;
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  color:#fff;
+}
+#toggleFold{
+  right:20px;
+  background:#475569;
+}
+#downloadBtn{
+  right:120px;
+  background:#059669;
+}
+#copyBtn{
+  right:220px;
+  background:#0ea5e9;
+}
+#copyBtn:hover{
+  background:#0284c7;
+}
+#downloadBtn:hover{
+  background:#047857;
+}
+#fileName{
+  position:absolute;
+  left:20px;
+  top:12px;
+  font-size:0.9em;
+  color:#cbd5e1;
+}
+#status{
+  font-size:0.9em;
+  margin-left:10px;
+  color:#94a3b8;
+}
+</style>
+</head>
+<body>
+<header>
+  <input id="urlInput" type="text" placeholder="https://example.com/style.css" />
+  <select id="proxySelect"></select>
+  <button onclick="loadSource()">取得</button>
+  <span id="status">準備OK。</span>
+</header>
+
+<div id="codeBox">
+  <span id="fileName"></span>
+  <button id="copyBtn" onclick="copyCode()">📋 コピー</button>
+  <button id="downloadBtn" onclick="downloadCode()">💾 ダウンロード</button>
+  <button id="toggleFold" onclick="toggleFold()">折りたたむ</button>
+  <pre id="preContainer"><code id="source" class="language-markup">ここにソースコードが表示されます。</code></pre>
+</div>
+
+<script>
+const proxies = [
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://thingproxy.freeboard.io/fetch/',
+  'https://cors.bridged.cc/',
+  'https://proxy.cors.sh/',
+  'https://cors.eu.org/',
+  'https://proxy.techzbots1.workers.dev/?u=',
+  'https://cors-fetch.browserslist.workers.dev/?url='
+];
+
+const sel=document.getElementById("proxySelect");
+proxies.forEach(p=>{
+  const o=document.createElement("option");
+  o.value=p;
+  o.textContent=p;
+  sel.appendChild(o);
+});
+sel.selectedIndex=Math.floor(Math.random()*proxies.length);
+
+const src=document.getElementById("source");
+const pre=document.getElementById("preContainer");
+const toggleBtn=document.getElementById("toggleFold");
+const fileNameEl=document.getElementById("fileName");
+let folded=false;
+let currentFileName="download.txt";
+
+function toggleFold(){
+  folded=!folded;
+  if(folded){
+    pre.style.maxHeight="300px";
+    pre.style.overflow="hidden";
+    toggleBtn.textContent="展開する";
+  }else{
+    pre.style.maxHeight="none";
+    pre.style.overflow="auto";
+    toggleBtn.textContent="折りたたむ";
+  }
+}
+
+function status(t){document.getElementById("status").textContent=t;}
+
+function detectLanguage(url, contentType, text){
+  url = url.toLowerCase();
+  if(url.endsWith(".css") || contentType.includes("text/css")) return "css";
+  if(url.endsWith(".js")  || contentType.includes("javascript")) return "javascript";
+  if(url.endsWith(".json") || contentType.includes("application/json")) return "json";
+  if(url.endsWith(".xml")  || contentType.includes("xml")) return "xml-doc";
+  if(url.endsWith(".html") || contentType.includes("text/html")) return "markup";
+  if(text.trim().startsWith("{") && text.trim().endsWith("}")) return "json";
+  return "markup";
+}
+
+function extractFileName(url, lang){
+  try{
+    const u=new URL(url);
+    const path=u.pathname.split("/").pop() || "index";
+    if(path.includes(".")) return path;
+    const ext = {
+      "markup":".html","css":".css","javascript":".js","json":".json","xml-doc":".xml"
+    }[lang] || ".txt";
+    return path+ext;
+  }catch{ return "download.txt"; }
+}
+
+async function loadSource(){
+  const url=document.getElementById("urlInput").value.trim();
+  if(!url)return alert("URLを入力してください");
+  src.textContent="読み込み中...";
+  status("取得中...");
+  pre.style.maxHeight="300px";
+  toggleBtn.textContent="展開する";
+  folded=true;
+  fileNameEl.textContent="";
+  currentFileName="download.txt";
+
+  for(let proxy of proxies){
+    try{
+      const resp=await fetch(proxy+encodeURIComponent(url));
+      if(!resp.ok)continue;
+      const text=await resp.text();
+      const type=resp.headers.get("content-type") || "";
+      const lang=detectLanguage(url, type, text);
+      src.className=`language-${lang}`;
+      src.textContent=text;
+      Prism.highlightElement(src);
+
+      currentFileName=extractFileName(url, lang);
+      fileNameEl.textContent=currentFileName;
+      status(`✅ 読み込み成功 (${lang})`);
+      return;
+    }catch(e){}
+  }
+  status("❌ 全てのプロキシで失敗しました");
+}
+
+function downloadCode(){
+  const blob=new Blob([src.textContent],{type:"text/plain"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=currentFileName;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+async function copyCode(){
+  try{
+    await navigator.clipboard.writeText(src.textContent);
+    status("📋 コピーしました！");
+    const btn=document.getElementById("copyBtn");
+    const old=btn.textContent;
+    btn.textContent="✅ コピー済み";
+    btn.style.background="#22c55e";
+    setTimeout(()=>{
+      btn.textContent=old;
+      btn.style.background="#0ea5e9";
+    },1200);
+  }catch(e){
+    status("⚠ コピーに失敗しました");
+  }
+}
+</script>
 </body>
 </html>
