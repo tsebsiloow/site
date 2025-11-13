@@ -1,35 +1,159 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>HTMLを取得</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center transition-colors duration-300">
-  <div class="w-full max-w-md p-8 bg-gray-800 rounded-xl shadow-xl">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600 mb-6">HTMLproxy</h1>
-      <p class="text-gray-400 mb-8">ウェブサイトのhtmlを取得して、確認できます。</p>
-      <input type="text" id="searchBar" placeholder="URLを入力" class="w-full p-4 bg-gray-700 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 mb-6 placeholder-gray-400 transition duration-300 hover:bg-gray-600">
-      <button id="redirectButton" class="w-full py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold rounded-lg shadow-md hover:from-blue-600 hover:to-indigo-700 transition duration-200 ease-in-out">
-        URLを取得
-      </button>
-      <p class="mt-6 text-sm text-gray-400">サイトによっては、UIが壊れることがあります。また、X-Frame-OptionsヘッダーやCSP設定で取得できない場合があります。</p>
-    </div>
-  </div>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>プロキシブラウザ ZIP＋PDF一体版</title>
 
-  <script>
-    document.getElementById('redirectButton').addEventListener('click', () => {
-      const url = document.getElementById('searchBar').value.trim(); // サーチバーからURLを取得
-      if (!url) {
-        alert('URLを入力してください');
-        return;
+<!-- JSZip / FileSaver / html2pdf -->
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+body{margin:0;font-family:system-ui,sans-serif;background:#f8fafc;}
+header{background:#fff;padding:10px;display:flex;gap:8px;align-items:center;border-bottom:1px solid #ddd;position:sticky;top:0;}
+input,select,button{padding:8px;border-radius:6px;}
+input{flex:1;border:1px solid #ccc;}
+button{background:#2563eb;color:#fff;border:none;cursor:pointer;}
+iframe{width:100%;height:80vh;border:none;}
+#status{margin-left:10px;font-size:0.9em;}
+</style>
+</head>
+<body>
+<header>
+  <input id="urlInput" type="text" placeholder="https://example.com" />
+  <select id="proxySelect"></select>
+  <button onclick="loadPage()">表示</button>
+  <button onclick="saveAll()">💾 HTML＋PDF一体ZIP保存</button>
+  <span id="status">準備OK。</span>
+</header>
+<iframe id="viewer"></iframe>
+
+<script>
+const proxies=[
+  'https://api.allorigins.win/raw?url=',
+  'https://corsproxy.io/?',
+  'https://api.codetabs.com/v1/proxy?quest=',
+  'https://thingproxy.freeboard.io/fetch/',
+  'https://cors.bridged.cc/',
+  'https://proxy.cors.sh/',
+  'https://cors.eu.org/',
+  'https://proxy.techzbots1.workers.dev/?u=',
+  'https://cors-fetch.browserslist.workers.dev/?url='
+];
+
+const sel=document.getElementById("proxySelect");
+proxies.forEach(p=>{const o=document.createElement("option");o.value=p;o.textContent=p;sel.appendChild(o);});
+sel.selectedIndex=Math.floor(Math.random()*proxies.length);
+
+let currentHTML="", currentURL="";
+const viewer=document.getElementById("viewer");
+const statusEl=document.getElementById("status");
+function status(t){statusEl.textContent=t;}
+
+async function loadPage(){
+  const url=document.getElementById("urlInput").value.trim();
+  if(!url)return alert("URLを入力してください");
+  currentURL=url;
+  status("取得中...");
+  for(let proxy of proxies){
+    try{
+      const resp=await fetch(proxy+encodeURIComponent(url));
+      if(!resp.ok)continue;
+      const text=await resp.text();
+      currentHTML=text;
+      const blob=new Blob([text],{type:"text/html"});
+      viewer.src=URL.createObjectURL(blob);
+      status("✅ ページ取得成功");
+      return;
+    }catch(e){}
+  }
+  status("❌ 全てのプロキシで失敗");
+}
+
+async function saveAll(){
+  if(!currentHTML)return alert("ページを先に読み込んでください");
+  status("📦 ZIP準備中...");
+  const zip=new JSZip();
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(currentHTML,"text/html");
+
+  const assetsToSave=[];
+
+  doc.querySelectorAll('link[rel="stylesheet"][href], script[src], img[src]').forEach(el=>{
+    const attr=el.tagName==="LINK"?"href":"src";
+    const url=el.getAttribute(attr);
+    if(!url)return;
+    const abs=new URL(url,currentURL).href;
+    assetsToSave.push({el,url:abs,attr});
+  });
+
+  // --- 各リソース保存（階層再現） ---
+  for(let {el,url,attr} of assetsToSave){
+    try{
+      const blob=await fetchResource(url);
+      const pathname=(new URL(url)).pathname.replace(/^\/+/,'');
+      const path=pathname||"misc/"+Date.now();
+      zip.file(path,blob);
+      el.setAttribute(attr,pathname);
+      status(`保存中: ${path}`);
+    }catch(e){status(`⚠️ 失敗: ${url}`);}
+  }
+
+  // --- index.html ---
+  const htmlFinal=new XMLSerializer().serializeToString(doc);
+  zip.file("index.html",htmlFinal);
+
+  // --- PDF生成 ---
+  status("📝 PDF生成中...");
+  const tmp=document.createElement("iframe");
+  tmp.style.position="fixed";tmp.style.left="-9999px";
+  document.body.appendChild(tmp);
+  const b=new Blob([htmlFinal],{type:"text/html"});
+  tmp.src=URL.createObjectURL(b);
+
+  const pdfBlob=await new Promise(resolve=>{
+    tmp.onload=async()=>{
+      try{
+        const pdf=await html2pdf().set({
+          html2canvas:{scale:2,useCORS:true},
+          jsPDF:{format:"a4"}
+        }).from(tmp.contentDocument.body).outputPdf("blob");
+        resolve(pdf);
+      }catch(e){
+        status("⚠️ PDF生成失敗");
+        resolve(null);
       }
-      const replacedUrl = url.replace(/\./g, '.wakame02.');
-      const redirectUrl = `/tools/html/get/${encodeURIComponent(replacedUrl)}`;
-      window.location.href = redirectUrl;
-    });
-  </script>
+      tmp.remove();
+    };
+  });
+
+  if(pdfBlob){
+    zip.file("page.pdf",pdfBlob);
+    status("✅ PDF生成完了");
+  }
+
+  // --- ZIP出力 ---
+  const blob=await zip.generateAsync({type:"blob"});
+  const name=new URL(currentURL).hostname.replace(/\W+/g,"_")+"-complete.zip";
+  saveAs(blob,name);
+  status("🎉 完成！ HTML＋PDF ZIP保存完了");
+}
+
+async function fetchResource(url){
+  try{
+    const r=await fetch(url);
+    if(r.ok)return await r.blob();
+  }catch(e){}
+  for(let p of proxies){
+    try{
+      const r=await fetch(p+encodeURIComponent(url));
+      if(r.ok)return await r.blob();
+    }catch(e){}
+  }
+  throw new Error("取得失敗");
+}
+</script>
 </body>
 </html>
