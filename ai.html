@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>フレンドリーチャットボット</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #f5f3ff 0%, #fce7f3 50%, #dbeafe 100%);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .header {
+      background: white;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-bottom: 4px solid #a855f7;
+    }
+
+    .header h1 {
+      color: #a855f7;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header p {
+      color: #6b7280;
+      font-size: 14px;
+      margin-top: 5px;
+    }
+
+    .chat-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .message {
+      display: flex;
+      margin-bottom: 20px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.user {
+      justify-content: flex-end;
+    }
+
+    .message-content {
+      max-width: 70%;
+      padding: 15px 20px;
+      border-radius: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+      color: white;
+    }
+
+    .message.assistant .message-content {
+      background: white;
+      color: #1f2937;
+      border: 2px solid #e9d5ff;
+    }
+
+    .timestamp {
+      font-size: 11px;
+      margin-top: 8px;
+      opacity: 0.7;
+    }
+
+    .loading {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      padding: 15px 20px;
+      background: white;
+      border-radius: 20px;
+      border: 2px solid #e9d5ff;
+      width: fit-content;
+    }
+
+    .loading.active {
+      display: flex;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid #e9d5ff;
+      border-top-color: #a855f7;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .quick-prompts {
+      background: white;
+      padding: 20px;
+      border-top: 1px solid #e5e7eb;
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .quick-prompts.hidden {
+      display: none;
+    }
+
+    .quick-prompts p {
+      color: #6b7280;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    .prompt-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .prompt-btn {
+      padding: 10px 20px;
+      background: linear-gradient(135deg, #f3e8ff 0%, #fce7f3 100%);
+      color: #7c3aed;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .prompt-btn:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #e9d5ff 0%, #fbcfe8 100%);
+    }
+
+    .input-area {
+      background: white;
+      padding: 20px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      border-top: 1px solid #e5e7eb;
+    }
+
+    .input-container {
+      display: flex;
+      gap: 10px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    #messageInput {
+      flex: 1;
+      padding: 15px;
+      border: 2px solid #d8b4fe;
+      border-radius: 12px;
+      font-size: 15px;
+      resize: none;
+      font-family: inherit;
+    }
+
+    #messageInput:focus {
+      outline: none;
+      border-color: #a855f7;
+    }
+
+    #sendButton {
+      padding: 0 25px;
+      background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.2s;
+    }
+
+    #sendButton:hover:not(:disabled) {
+      transform: scale(1.05);
+    }
+
+    #sendButton:disabled {
+      background: #d1d5db;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>💬 チャットボット</h1>
+    <p>気軽に話しかけてね!</p>
+  </div>
+
+  <div class="chat-container" id="chatContainer">
+    <div class="message assistant">
+      <div class="message-content">
+        <div>こんにちは!気軽に話しかけてくださいね。今日はどんな一日でしたか?😊</div>
+        <div class="timestamp" id="initialTime"></div>
+      </div>
+    </div>
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <span>考え中...</span>
+    </div>
+  </div>
+
+  <div class="quick-prompts" id="quickPrompts">
+    <p>話題の例:</p>
+    <div class="prompt-buttons">
+      <button class="prompt-btn" onclick="setPrompt('今日の気分は? ☕')">☕ 今日の気分は?</button>
+      <button class="prompt-btn" onclick="setPrompt('おすすめの音楽教えて 🎵')">🎵 おすすめの音楽教えて</button>
+      <button class="prompt-btn" onclick="setPrompt('面白い話聞かせて ✨')">✨ 面白い話聞かせて</button>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <div class="input-container">
+      <textarea 
+        id="messageInput" 
+        rows="2" 
+        placeholder="メッセージを入力..."
+      ></textarea>
+      <button id="sendButton" onclick="sendMessage()">送信</button>
+    </div>
+  </div>
+
+  <script>
+    const chatContainer = document.getElementById('chatContainer');
+    const messageInput = document.getElementById('messageInput');
+    const sendButton = document.getElementById('sendButton');
+    const loading = document.getElementById('loading');
+    const quickPrompts = document.getElementById('quickPrompts');
+    
+    let conversationHistory = [];
+
+    // 初期タイムスタンプ設定
+    document.getElementById('initialTime').textContent = new Date().toLocaleTimeString('ja-JP', {
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    function setPrompt(text) {
+      messageInput.value = text;
+      messageInput.focus();
+    }
+
+    function addMessage(role, content) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = `message ${role}`;
+      
+      const timestamp = new Date().toLocaleTimeString('ja-JP', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      messageDiv.innerHTML = `
+        <div class="message-content">
+          <div>${content}</div>
+          <div class="timestamp">${timestamp}</div>
+        </div>
+      `;
+
+      chatContainer.insertBefore(messageDiv, loading);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = messageInput.value.trim();
+      if (!message || loading.classList.contains('active')) return;
+
+      // クイックプロンプトを非表示
+      quickPrompts.classList.add('hidden');
+
+      // ユーザーメッセージを追加
+      addMessage('user', message);
+      conversationHistory.push({ role: 'user', content: message });
+
+      messageInput.value = '';
+      sendButton.disabled = true;
+      loading.classList.add('active');
+
+      try {
+        const response = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            model: 'claude-sonnet-4-20250514',
+            max_tokens: 1000,
+            system: `あなたはフレンドリーで親しみやすいチャットボットです。以下の特徴で会話してください：
+
+- 友達のように気軽に話す
+- 共感的で温かい態度
+- 適度に絵文字を使う（使いすぎない）
+- 相手の気持ちに寄り添う
+- 時には冗談やユーモアも交える
+- 自然な日本語で会話する
+- 長すぎず、短すぎない適切な長さで返答
+- 相手の話題に興味を持って質問する`,
+            messages: conversationHistory
+          })
+        });
+
+        const data = await response.json();
+        
+        if (data.error) {
+          console.error('APIエラー:', data.error);
+          addMessage('assistant', 'ごめんなさい、ちょっと調子が悪いみたい...もう一度話しかけてもらえますか?😅');
+          return;
+        }
+
+        const aiResponse = data.content
+          .filter(item => item.type === 'text')
+          .map(item => item.text)
+          .join('\n');
+
+        conversationHistory.push({ role: 'assistant', content: aiResponse });
+        addMessage('assistant', aiResponse);
+
+      } catch (error) {
+        console.error('エラー:', error);
+        addMessage('assistant', 'ごめんなさい、ちょっと調子が悪いみたい...もう一度話しかけてもらえますか?😅');
+      } finally {
+        loading.classList.remove('active');
+        sendButton.disabled = false;
+        messageInput.focus();
+      }
+    }
+
+    // Enterキーで送信
+    messageInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    // 初期フォーカス
+    messageInput.focus();
+  </script>
+</body>
+</html>
