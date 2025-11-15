@@ -1,103 +1,191 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>APIチェッカー</title>
-    <script src="/js/tailwindcss.js"></script>
-    <link rel="stylesheet" href="/css/page.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invidious API チェッカー</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#9aa4b2;--accent:#3b82f6;--ok:#16a34a;--bad:#ef4444}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN','Noto Sans JP',sans-serif;background:linear-gradient(180deg,#071024 0%, #08132a 100%);color:#e6eef8;margin:0;padding:24px}
+    .container{max-width:980px;margin:0 auto}
+    header h1{margin:0 0 8px;font-size:20px}
+    textarea{width:100%;min-height:120px;border-radius:8px;border:1px solid #173043;padding:12px;background:#041022;color:#e6eef8;font-size:14px}
+    .row{display:flex;gap:8px;align-items:center;margin-top:12px}
+    button{background:var(--accent);border:none;color:white;padding:8px 12px;border-radius:8px;cursor:pointer}
+    .small{font-size:13px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse;margin-top:16px}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.03);text-align:left}
+    th{color:var(--muted);font-size:13px}
+    .status{padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px}
+    .ok{background:rgba(22,163,74,0.12);color:var(--ok)}
+    .no{background:rgba(239,68,68,0.12);color:var(--bad)}
+    .cors{background:rgba(59,130,246,0.08);color:var(--accent)}
+    .note{margin-top:12px;color:var(--muted);font-size:13px}
+    footer{margin-top:18px;color:var(--muted);font-size:13px}
+    .inline-input{display:flex;gap:8px}
+    .checkbox{display:inline-flex;align-items:center;gap:6px}
+  </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-white">
-    <button class="back-button fixed top-5 left-5 z-50 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out flex items-center space-x-2" onclick="window.location.href='/tools'">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-        </svg>
-        <span>戻る</span>
-    </button>
-  
-    <div class="w-full h-screen p-6">
-        <h1 class="text-3xl font-bold text-center py-4">APIチェックツール</h1>
-        <p class="text-gray-900 dark:text-gray-300 mt-2 leading-relaxed">invidiousのURLを改行して入力してみてね。改行を入れたり整えたりするのにはAIを使うと楽かも。</p><br><br>
-        <div class="w-full max-w-4xl mx-auto">
-            <form id="apiForm" class="space-y-4">
-                <label for="urls" class="block text-gray-700 dark:text-gray-300 text-lg">試すAPIのURL（改行区切り）:</label>
-                <textarea name="urls" id="urls" rows="10" class="w-full p-4 border rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"></textarea>
-                <button id="submitButton" type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md transition text-lg">チェック開始</button>
-            </form>
-            <p id="loadingMessage" class="text-blue-500 mt-4 hidden text-center text-lg">APIをチェック中…<br>URLが多いほど、チェックに時間がかかります。<br>チェック中にこのページを閉じたり、ネットを切断したりしないで下さい。</p>
-            <p id="errorMessage" class="text-red-500 mt-4 hidden text-center text-lg"></p>
-            <div id="resultContainer" class="mt-6 hidden">
-                <h2 class="text-2xl font-semibold text-center mb-4">結果</h2>
-                <pre id="result" class="bg-gray-200 dark:bg-gray-800 p-4 rounded-lg shadow-md whitespace-pre-wrap"></pre>
-            </div>
+<body>
+  <div class="container">
+    <header>
+      <h1>Invidious API チェッカー</h1>
+      <div class="small">複数の Invidious インスタンスが <strong>API を提供しているか</strong> を自動で判定します。CORS によりブラウザから直接確認できない場合は "CORS プロキシを使う" を試してください。</div>
+    </header>
+
+    <section style="margin-top:14px">
+      <label class="small">チェックするインスタンス（1行に1つ、例: invidious.snopyta.org）</label>
+      <textarea id="hosts" placeholder="例:\ninvidious.snopyta.org\nyewtu.cafe\n...">invidious.snopyta.org
+yewtu.cafe
+yewtu.eu
+</textarea>
+
+      <div class="row">
+        <div class="inline-input">
+          <label class="checkbox"><input type="checkbox" id="useProxy"> <span class="small">CORS プロキシを使う</span></label>
+          <select id="proxySelect">
+            <option value="">(ブラウザ直通)</option>
+            <option value="https://api.allorigins.win/raw?url=">AllOrigins</option>
+            <option value="https://api.allorigins.cf/raw?url=">AllOrigins (CF)</option>
+            <option value="https://corsproxy.io/?">corsproxy.io</option>
+          </select>
         </div>
-    </div>
+        <button id="checkBtn">チェック開始</button>
+        <button id="clearBtn" style="background:#6b7280">クリア</button>
+      </div>
+
+      <div class="note">判定方法: 各インスタンスの <code>/api/v1/version</code> と <code>/api/v1/search?q=test</code> を順に試し、200 かつ JSON が返れば "API 利用可能" と判定します。CORS エラーなどでレスポンスを受け取れない場合は <em>"CORS ブロック"</em> と表示します。</div>
+
+      <table id="results">
+        <thead><tr><th>インスタンス</th><th>URL</th><th>状態</th><th>詳細</th></tr></thead>
+        <tbody></tbody>
+      </table>
+
+      <div class="note">ヒント: ブラウザから直接チェックできない場合は「CORS プロキシを使う」を ON にするか、ローカルで <code>curl</code> を使って確認してください。例: <code>curl -i https://INVIDIOUS_DOMAIN/api/v1/version</code></div>
+    </section>
+
+    <footer>作成者: Invidious API チェッカー • ローカルで保存してご利用ください</footer>
+  </div>
 
 <script>
-    document.getElementById("apiForm").addEventListener("submit", async function (event) {
-        event.preventDefault();
+const checkBtn = document.getElementById('checkBtn');
+const clearBtn = document.getElementById('clearBtn');
+const hostsEl = document.getElementById('hosts');
+const tbody = document.querySelector('#results tbody');
+const useProxy = document.getElementById('useProxy');
+const proxySelect = document.getElementById('proxySelect');
 
-        const errorMessage = document.getElementById("errorMessage");
-        const loadingMessage = document.getElementById("loadingMessage");
-        const submitButton = document.getElementById("submitButton");
-        const resultContainer = document.getElementById("resultContainer");
-        const result = document.getElementById("result");
+function makeUrl(host, path){
+  host = host.trim();
+  if(!host) return null;
+  if(!host.startsWith('http')) host = 'https://' + host;
+  // remove trailing slash if present
+  if(host.endsWith('/')) host = host.slice(0,-1);
+  return host + path;
+}
 
-        errorMessage.classList.add("hidden");
-        loadingMessage.classList.remove("hidden");
-        submitButton.disabled = true;
-        submitButton.classList.add("opacity-50", "cursor-not-allowed");
-        resultContainer.classList.add("hidden");
+async function fetchWithTimeout(resource, options = {}){
+  const {timeout = 6000} = options;
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  try{
+    const res = await fetch(resource, {...options, signal: controller.signal});
+    clearTimeout(id);
+    return res;
+  }catch(e){
+    clearTimeout(id);
+    throw e;
+  }
+}
 
-        try {
-            const urls = document
-                .getElementById("urls")
-                .value.split("\n")
-                .map(url => url.trim())
-                .filter(url => url);
+function addRow(host, url, status, detail){
+  const tr = document.createElement('tr');
+  const tdHost = document.createElement('td'); tdHost.textContent = host;
+  const tdUrl = document.createElement('td'); tdUrl.textContent = url;
+  const tdStatus = document.createElement('td');
+  const span = document.createElement('span'); span.className = 'status';
+  if(status === 'ok'){span.classList.add('ok'); span.textContent = 'API 利用可能';}
+  else if(status === 'no'){span.classList.add('no'); span.textContent = 'API 非対応';}
+  else if(status === 'cors'){span.classList.add('cors'); span.textContent = 'CORS によるブロック（不明）';}
+  else {span.textContent = status;}
+  tdStatus.appendChild(span);
+  const tdDetail = document.createElement('td'); tdDetail.textContent = detail || '';
+  tr.appendChild(tdHost); tr.appendChild(tdUrl); tr.appendChild(tdStatus); tr.appendChild(tdDetail);
+  tbody.appendChild(tr);
+}
 
-            const response = await fetch("/tools/inv/check", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ urls }),
-            });
+checkBtn.addEventListener('click', async ()=>{
+  tbody.innerHTML = '';
+  const hosts = hostsEl.value.split('\n').map(h=>h.trim()).filter(Boolean);
+  if(hosts.length === 0) return alert('チェックするインスタンスを1つ以上入力してください');
+  checkBtn.disabled = true;
+  for(const host of hosts){
+    const urlBase = host.startsWith('http') ? host : ('https://' + host);
+    let apiVersionUrl = makeUrl(host, '/api/v1/version');
+    let apiSearchUrl = makeUrl(host, '/api/v1/search?q=test');
+    let proxyPrefix = '';
+    if(useProxy.checked && proxySelect.value) proxyPrefix = proxySelect.value;
 
-            if (!response.ok) {
-                throw new Error(await response.text());
-            }
-
-            const { successUrls, errorUrls } = await response.json();
-
-            let html = "<h2 class='text-xl font-semibold'>APIチェック結果</h2>";
-
-            if (successUrls.length) {
-                html += "<h3 class='text-green-500'>正常に取得できたURL</h3><ul class='list-disc pl-5'>";
-                successUrls.forEach(({ api, streamUrl }) => {
-                    html += `<li>${api} 　- 　<a href='${streamUrl}' target='_blank' class='text-blue-500 underline'>再生できるか確かめる</a></li><br>`;
-                });
-                html += "</ul>";
-            }
-
-            if (errorUrls.length) {
-                html += "<h3 class='text-red-500'>エラーが出たURL</h3><ul class='list-disc pl-5'>";
-                errorUrls.forEach(api => {
-                    html += `<li>${api}</li>`;
-                });
-                html += "</ul>";
-            }
-
-            result.innerHTML = html;
-            resultContainer.classList.remove("hidden");
-        } catch (error) {
-            errorMessage.textContent = error.message;
-            errorMessage.classList.remove("hidden");
-        } finally {
-            loadingMessage.classList.add("hidden");
-            submitButton.disabled = false;
-            submitButton.classList.remove("opacity-50", "cursor-not-allowed");
+    // try /api/v1/version first
+    try{
+      const finalUrl = proxyPrefix ? proxyPrefix + encodeURIComponent(apiVersionUrl) : apiVersionUrl;
+      const res = await fetchWithTimeout(finalUrl, {timeout:6000, credentials: 'omit'});
+      if(res.ok){
+        // try parse JSON
+        try{
+          const json = await res.json();
+          // basic heuristic for version object
+          if(typeof json === 'object'){
+            addRow(host, apiVersionUrl, 'ok', 'version: ' + (json.version || JSON.stringify(json).slice(0,50)));
+            continue;
+          }
+        }catch(e){
+          // not json — still treat as success if status ok
+          addRow(host, apiVersionUrl, 'ok', 'HTTP 200 (non-JSON)');
+          continue;
         }
-    });
-</script>
+      }
+      // if not ok, fallthrough to try search
+    }catch(err){
+      // fetch threw — possibly CORS or network error
+      // we'll try search endpoint next
+      // but if error.name === 'AbortError' treat as timeout
+    }
 
+    // try /api/v1/search
+    try{
+      const finalUrl = proxyPrefix ? proxyPrefix + encodeURIComponent(apiSearchUrl) : apiSearchUrl;
+      const res2 = await fetchWithTimeout(finalUrl, {timeout:6000, credentials: 'omit'});
+      if(res2.ok){
+        try{
+          const j = await res2.json();
+          if(Array.isArray(j) || typeof j === 'object'){
+            addRow(host, apiSearchUrl, 'ok', 'search ok — JSON returned');
+            continue;
+          }
+        }catch(e){
+          addRow(host, apiSearchUrl, 'ok', 'HTTP 200 (non-JSON)');
+          continue;
+        }
+      }else{
+        addRow(host, apiSearchUrl, 'no', 'HTTP ' + res2.status);
+        continue;
+      }
+    }catch(e){
+      // If a TypeError occurs during fetch in browsers it's often CORS blocked
+      if(e.name === 'AbortError'){
+        addRow(host, apiSearchUrl, 'no', 'タイムアウト');
+      }else{
+        addRow(host, apiSearchUrl, 'cors', e.message || String(e));
+      }
+      continue;
+    }
+  }
+  checkBtn.disabled = false;
+});
+
+clearBtn.addEventListener('click', ()=>{tbody.innerHTML='';});
+
+</script>
 </body>
 </html>
