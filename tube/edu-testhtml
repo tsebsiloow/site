@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>YouTubeEducation Embedder</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,Arial;}
+    body{max-width:980px;margin:28px auto;padding:18px;line-height:1.5;color:#111}
+    h1{font-size:1.3rem;margin:0 0 10px}
+    label{display:block;margin-top:12px;font-weight:600}
+    input[type=text], textarea, select{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;margin-top:6px}
+    .row{display:flex;gap:8px;align-items:center}
+    .row > *{flex:1}
+    button{background:#0b74de;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer}
+    button.secondary{background:#666}
+    .preview{margin-top:16px;border-radius:12px;overflow:hidden;border:1px solid #eee}
+    .iframe-wrap{position:relative;padding-top:56.25%;background:#000}
+    iframe{position:absolute;left:0;top:0;width:100%;height:100%;border:0}
+    .help{font-size:0.92rem;color:#444;margin-top:8px}
+    .params-presets{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+    .preset{background:#eee;padding:6px 8px;border-radius:6px;cursor:pointer}
+    pre{background:#f7f7f7;padding:10px;border-radius:8px;overflow:auto}
+    .small{font-size:0.9rem;color:#666}
+  </style>
+</head>
+<body>
+  <h1>YouTubeEducation 埋め込みジェネレーター</h1>
+  <div class="help">動画の URL または動画 ID を入力し、パラメーターを付けて <code>https://youtubeeducation.com/embed/{videoID}{parameter}</code> を生成してプレビュー・コピーします。</div>
+
+  <label for="source">動画 URL または動画 ID</label>
+  <input id="source" type="text" placeholder="例: https://www.youtube.com/watch?v=dQw4w9WgXcQ  または dQw4w9WgXcQ">
+
+  <label for="params">パラメーター（先頭に ? を付けるか、ここで追加します）</label>
+  <input id="params" type="text" placeholder="例: ?autoplay=1&mute=1&controls=0">
+
+  <div class="params-presets" aria-hidden>
+    <div class="preset" data-param="?autoplay=1&mute=1">autoplay + mute</div>
+    <div class="preset" data-param="?controls=0">controls=0</div>
+    <div class="preset" data-param="?start=30">start=30</div>
+    <div class="preset" data-param="?end=60">end=60</div>
+    <div class="preset" data-param="?playsinline=1">playsinline</div>
+    <div class="preset" data-param="?rel=0">rel=0</div>
+  </div>
+
+  <div style="margin-top:12px" class="row">
+    <button id="generate">生成してプレビュー</button>
+    <button id="copy" class="secondary">埋め込みコードをコピー</button>
+  </div>
+
+  <div class="help" style="margin-top:10px">フルスクリーン再生はプレイヤーにより制限される場合があります。必要に応じて <code>allowfullscreen</code> を追加して下さい。</div>
+
+  <div id="previewArea" class="preview" hidden>
+    <div style="padding:10px;display:flex;justify-content:space-between;align-items:center">
+      <div class="small">生成された埋め込み URL：</div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button id="openNew">新しいタブで開く</button>
+        <button id="toggleFs" class="secondary">フルスクリーン属性 切替</button>
+      </div>
+    </div>
+    <div style="padding:10px">
+      <pre id="generatedUrl" style="white-space:pre-wrap;word-break:break-all;margin:0"></pre>
+    </div>
+    <div class="iframe-wrap" id="iframeWrap">
+      <!-- iframe injected here -->
+    </div>
+    <div style="padding:10px">
+      <label class="small">埋め込みコード（iframe）</label>
+      <pre id="embedCode"></pre>
+    </div>
+  </div>
+
+  <script>
+    function extractVideoID(input){
+      if(!input) return null;
+      input = input.trim();
+      // If it looks like an ID (11 chars common length) or longer, return it directly
+      // but prefer to detect common YouTube URL patterns.
+      try{
+        const u = new URL(input);
+        // youtube.com/watch?v= or youtu.be/
+        if(u.hostname.includes('youtu')){
+          if(u.searchParams.get('v')) return u.searchParams.get('v');
+          // path like /embed/ID or /watch/ID
+          const parts = u.pathname.split('/').filter(Boolean);
+          return parts[parts.length-1] || null;
+        }
+      }catch(e){
+        // not a URL, maybe ID directly
+      }
+      // accept common ID characters (letters,numbers,-,_)
+      const m = input.match(/[A-Za-z0-9_-]{6,}/);
+      return m ? m[0] : null;
+    }
+
+    function normalizeParams(p){
+      if(!p) return '';
+      p = p.trim();
+      if(!p) return '';
+      if(!p.startsWith('?')) p = '?' + p;
+      // replace leading double ??
+      p = p.replace(/\?+/,'?');
+      return p;
+    }
+
+    const source = document.getElementById('source');
+    const params = document.getElementById('params');
+    const generate = document.getElementById('generate');
+    const previewArea = document.getElementById('previewArea');
+    const generatedUrl = document.getElementById('generatedUrl');
+    const iframeWrap = document.getElementById('iframeWrap');
+    const embedCode = document.getElementById('embedCode');
+    const copyBtn = document.getElementById('copy');
+    const openNew = document.getElementById('openNew');
+    const toggleFs = document.getElementById('toggleFs');
+
+    let lastSrc = '';
+    let allowFs = true;
+
+    document.querySelectorAll('.preset').forEach(el=>{
+      el.addEventListener('click',()=>{
+        const cur = params.value.trim();
+        const add = el.dataset.param || '';
+        if(!cur) params.value = add;
+        else{
+          // merge simply by appending (user can tidy later)
+          params.value = cur + (add.startsWith('?') ? (cur.includes('?')? '&' + add.slice(1) : add) : (cur.includes('?')? '&' + add : '?' + add));
+        }
+      });
+    });
+
+    generate.addEventListener('click',()=>{
+      const id = extractVideoID(source.value);
+      if(!id){
+        alert('動画ID を抽出できませんでした。URL または ID を正しく入力してください。');
+        return;
+      }
+      const p = normalizeParams(params.value);
+      const src = `https://youtubeeducation.com/embed/${encodeURIComponent(id)}${p}`;
+      lastSrc = src;
+      generatedUrl.textContent = src;
+
+      // build iframe
+      iframeWrap.innerHTML = '';
+      const ifr = document.createElement('iframe');
+      ifr.src = src;
+      ifr.title = 'YouTubeEducation Player';
+      ifr.allow = 'autoplay; encrypted-media; picture-in-picture; fullscreen';
+      if(allowFs) ifr.setAttribute('allowfullscreen','');
+      iframeWrap.appendChild(ifr);
+
+      // embed code
+      const iframeAttrs = [];
+      iframeAttrs.push('width="560"');
+      iframeAttrs.push('height="315"');
+      iframeAttrs.push(`src="${src}"`);
+      if(allowFs) iframeAttrs.push('allowfullscreen');
+      iframeAttrs.push('frameborder="0"');
+      iframeAttrs.push('allow="autoplay; encrypted-media; picture-in-picture; fullscreen"');
+      const code = `<iframe ${iframeAttrs.join(' ')}></iframe>`;
+      embedCode.textContent = code;
+
+      previewArea.hidden = false;
+    });
+
+    copyBtn.addEventListener('click',()=>{
+      if(!embedCode.textContent){ alert('まず生成してください。'); return; }
+      navigator.clipboard.writeText(embedCode.textContent).then(()=>{
+        copyBtn.textContent = 'コピーしました！';
+        setTimeout(()=>copyBtn.textContent = '埋め込みコードをコピー',1500);
+      });
+    });
+
+    openNew.addEventListener('click',()=>{
+      if(!lastSrc){ alert('まず生成してください。'); return; }
+      window.open(lastSrc,'_blank');
+    });
+
+    toggleFs.addEventListener('click',()=>{
+      allowFs = !allowFs;
+      toggleFs.textContent = allowFs ? 'フルスクリーン属性: ON' : 'フルスクリーン属性: OFF';
+      // re-generate iframe if exists
+      if(lastSrc){
+        const ifr = iframeWrap.querySelector('iframe');
+        if(ifr){
+          if(allowFs) ifr.setAttribute('allowfullscreen',''); else ifr.removeAttribute('allowfullscreen');
+          // update embed code
+          const code = embedCode.textContent.replace(/allowfullscreen(\s*)?/,'');
+          if(allowFs){
+            embedCode.textContent = code.replace(/<iframe /,'<iframe allowfullscreen ');
+          }else{
+            embedCode.textContent = code;
+          }
+        }
+      }
+    });
+
+    // convenience: press Enter on source to generate
+    source.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); generate.click(); } });
+    params.addEventListener('keydown',(e)=>{ if(e.key==='Enter'){ e.preventDefault(); generate.click(); } });
+  </script>
+</body>
+</html>
