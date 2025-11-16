@@ -10,3 +10,11 @@
 }
 ```
 ## form
+1. [ここ](https://forms.gle/8XhwAAB5cMtZ5UEf6)にアクセス
+2. fn + F12 を押す
+3. xQ7hmzHq1SM　と検索
+4. 青の方にカーソルを合わせてリンクをコピー
+5. keyだけを取得して⇩に合わせる
+```
+?enablejsapi=1&rel=0&control=1&start=0&autoplay=1&errorlinks=0&embed_config={"enc":" { [ (ここにkeyを入力) ] } "}
+```
