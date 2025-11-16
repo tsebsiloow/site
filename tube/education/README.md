@@ -18,3 +18,7 @@
 ```
 ?enablejsapi=1&rel=0&control=1&start=0&autoplay=1&errorlinks=0&embed_config={"enc":" { [ (ここにkeyを入力) ] } "}
 ```
+## テストする
+[ここ](https://html.cafe/x8520dbb3)にアクセスする
+
+パラメーターのとこを上で取得したものに入れ替える
