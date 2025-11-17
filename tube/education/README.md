@@ -22,3 +22,6 @@
 [ここ](https://html.cafe/x8520dbb3)にアクセスする
 
 パラメーターのとこを上で取得したものに入れ替える
+
+## 変更する。
+[公開リポジトリ](https://github.com/woolisbest-4520/about-youtube)を変更する
