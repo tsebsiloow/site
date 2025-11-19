@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あなたのIPアドレス</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+        }
+
+        .ip-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-size: 32px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            word-break: break-all;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: left;
+        }
+
+        .info-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #666;
+            font-weight: 600;
+        }
+
+        .info-value {
+            color: #333;
+            font-weight: bold;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .error {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌐 あなたのIPアドレス</h1>
+        <div class="ip-display" id="ipv4Display">
+            <span class="loading">読み込み中...</span>
+        </div>
+        <div style="margin: 10px 0; color: #666; font-size: 14px;">IPv4</div>
+        
+        <div class="ip-display" id="ipv6Display" style="font-size: 24px;">
+            <span class="loading">読み込み中...</span>
+        </div>
+        <div style="margin: 10px 0; color: #666; font-size: 14px;">IPv6</div>
+        
+        <div class="info" id="info" style="display: none;">
+            <div class="info-item">
+                <span class="info-label">国:</span>
+                <span class="info-value" id="country">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">地域:</span>
+                <span class="info-value" id="region">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">都市:</span>
+                <span class="info-value" id="city">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ISP:</span>
+                <span class="info-value" id="isp">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">タイムゾーン:</span>
+                <span class="info-value" id="timezone">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">ブラウザ:</span>
+                <span class="info-value" id="browser">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">OS:</span>
+                <span class="info-value" id="os">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">画面解像度:</span>
+                <span class="info-value" id="screen">-</span>
+            </div>
+            <div class="info-item">
+                <span class="info-label">言語:</span>
+                <span class="info-value" id="language">-</span>
+            </div>
+        </div>
+
+        <button onclick="refreshIP()">🔄 更新</button>
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        function getBrowserInfo() {
+            const ua = navigator.userAgent;
+            let browser = 'Unknown';
+            
+            if (ua.includes('Firefox')) browser = 'Firefox';
+            else if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+            else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
+            else if (ua.includes('Edg')) browser = 'Edge';
+            else if (ua.includes('Opera') || ua.includes('OPR')) browser = 'Opera';
+            
+            return browser;
+        }
+
+        function getOSInfo() {
+            const ua = navigator.userAgent;
+            let os = 'Unknown';
+            
+            if (ua.includes('Win')) os = 'Windows';
+            else if (ua.includes('Mac')) os = 'macOS';
+            else if (ua.includes('Linux')) os = 'Linux';
+            else if (ua.includes('Android')) os = 'Android';
+            else if (ua.includes('iOS') || ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+            
+            return os;
+        }
+
+        async function getIPAddress() {
+            const ipv4Display = document.getElementById('ipv4Display');
+            const ipv6Display = document.getElementById('ipv6Display');
+            const info = document.getElementById('info');
+            const error = document.getElementById('error');
+
+            try {
+                ipv4Display.innerHTML = '<span class="loading">読み込み中...</span>';
+                ipv6Display.innerHTML = '<span class="loading">読み込み中...</span>';
+                error.textContent = '';
+                info.style.display = 'none';
+
+                // IPv4を取得
+                const ipv4Response = await fetch('https://api.ipify.org?format=json');
+                const ipv4Data = await ipv4Response.json();
+                ipv4Display.textContent = ipv4Data.ip;
+
+                // IPv6を取得
+                try {
+                    const ipv6Response = await fetch('https://api64.ipify.org?format=json');
+                    const ipv6Data = await ipv6Response.json();
+                    
+                    if (ipv6Data.ip.includes(':')) {
+                        ipv6Display.textContent = ipv6Data.ip;
+                    } else {
+                        ipv6Display.innerHTML = '<span class="loading" style="font-size: 18px;">IPv6未対応</span>';
+                    }
+                } catch (err) {
+                    ipv6Display.innerHTML = '<span class="loading" style="font-size: 18px;">IPv6未対応</span>';
+                }
+
+                // 詳細情報を取得（IPv4ベース）
+                const detailResponse = await fetch('https://ipapi.co/' + ipv4Data.ip + '/json/');
+                const data = await detailResponse.json();
+                
+                // 位置情報
+                document.getElementById('country').textContent = data.country_name || '-';
+                document.getElementById('region').textContent = data.region || '-';
+                document.getElementById('city').textContent = data.city || '-';
+                document.getElementById('isp').textContent = data.org || '-';
+                document.getElementById('timezone').textContent = data.timezone || '-';
+                
+                // ブラウザ・OS情報
+                document.getElementById('browser').textContent = getBrowserInfo();
+                document.getElementById('os').textContent = getOSInfo();
+                
+                // 画面解像度
+                document.getElementById('screen').textContent = 
+                    `${screen.width} x ${screen.height}`;
+                
+                // 言語
+                document.getElementById('language').textContent = navigator.language || '-';
+                
+                info.style.display = 'block';
+            } catch (err) {
+                ipv4Display.innerHTML = '<span class="loading">取得できませんでした</span>';
+                ipv6Display.innerHTML = '<span class="loading">取得できませんでした</span>';
+                error.textContent = 'IPアドレスの取得に失敗しました。再度お試しください。';
+                console.error('Error:', err);
+            }
+        }
+
+        function refreshIP() {
+            getIPAddress();
+        }
+
+        // ページ読み込み時に自動実行
+        getIPAddress();
+    </script>
+</body>
+</html>
