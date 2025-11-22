@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>wkt-lite — 動画プレイヤー (簡易版)</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--muted:#94a3b8;--accent:#38bdf8}
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}
+    body{background:linear-gradient(180deg,#081024 0%, #071025 100%);color:#e6eef8;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:1100px}
+    header{display:flex;gap:12px;align-items:center;margin-bottom:18px}
+    header h1{font-size:18px;margin:0}
+    .card{background:var(--card);border-radius:12px;padding:16px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    input[type=text]{flex:1;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.05);background:transparent;color:inherit}
+    button{padding:10px 12px;border-radius:8px;border:0;background:var(--accent);color:#012;cursor:pointer}
+    .small{font-size:13px;color:var(--muted)}
+    .player-area{margin-top:14px;display:grid;grid-template-columns:1fr 320px;gap:12px}
+    .player{background:#071126;border-radius:10px;padding:12px;min-height:360px;display:flex;align-items:center;justify-content:center}
+    .playlist{max-height:360px;overflow:auto;padding:8px;border-radius:8px;background:#061022}
+    .item{padding:8px;border-radius:8px;margin-bottom:8px;background:transparent;display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .item:hover{background:rgba(255,255,255,0.02)}
+    .meta{font-size:13px;color:var(--muted)}
+    .tiny{font-size:12px;color:var(--muted)}
+    footer{margin-top:12px;text-align:right;color:var(--muted);font-size:13px}
+    @media(max-width:900px){.player-area{grid-template-columns:1fr;}.playlist{max-height:220px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="card" style="padding:8px 12px;display:flex;align-items:center;gap:10px">
+        <h1>wkt-lite — 動画視聴専用</h1>
+        <div class="small">YouTube / Vimeo / 直接 MP4 を簡単に再生</div>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="controls">
+        <input id="urlInput" type="text" placeholder="動画のURLを貼り付け (YouTube/Vimeo/https://.../.mp4)" />
+        <button id="addBtn">追加して再生</button>
+        <label class="tiny" style="display:flex;align-items:center;gap:6px;margin-left:6px"><input id="useProxy" type="checkbox"/> CORSプロキシを使用</label>
+      </div>
+
+      <div class="player-area">
+        <div class="player" id="playerContainer">
+          <div id="welcome" class="tiny">URLを貼って「追加して再生」してください</div>
+        </div>
+
+        <aside class="playlist" id="playlist">
+          <!-- playlist items -->
+        </aside>
+      </div>
+
+      <footer>
+        静的ホスティング (GitHub Pages など) で動きます。右上の「CORSプロキシを使用」は必要な場合のみチェックしてください。
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // シンプルな動画再生ページ (wkt-lite)
+    const urlInput = document.getElementById('urlInput')
+    const addBtn = document.getElementById('addBtn')
+    const playlistEl = document.getElementById('playlist')
+    const playerContainer = document.getElementById('playerContainer')
+    const useProxyCheckbox = document.getElementById('useProxy')
+
+    let playlist = [] // {id, title, url, type}
+
+    function detectType(url) {
+      try {
+        const u = new URL(url)
+        // youtube
+        const ymatch = url.match(/(?:youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/)
+        if (ymatch) return {type:'youtube', id:ymatch[1], embedUrl: `https://www.youtube.com/embed/${ymatch[1]}?rel=0&autoplay=1`}
+        // vimeo
+        const vmatch = url.match(/vimeo\.com\/(?:video\/)?(\d+)/)
+        if (vmatch) return {type:'vimeo', id:vmatch[1], embedUrl: `https://player.vimeo.com/video/${vmatch[1]}?autoplay=1`}
+        // direct video file
+        if (u.pathname.match(/\.(mp4|webm|ogg)$/i)) return {type:'file', src:url}
+        // maybe it's an embedable link (raw iframe allowed) - fallback to iframe
+        return {type:'iframe', src:url}
+      } catch (e) {
+        return null
+      }
+    }
+
+    function createPlayerItem(item) {
+      // Clear player
+      playerContainer.innerHTML = ''
+      if (item.type === 'youtube' || item.type === 'vimeo' || item.type === 'iframe') {
+        const iframe = document.createElement('iframe')
+        iframe.src = maybeProxy(item.embedUrl || item.src)
+        iframe.width = '100%'
+        iframe.height = '100%'
+        iframe.allow = 'autoplay; fullscreen; picture-in-picture'
+        iframe.setAttribute('frameborder','0')
+        iframe.style.minHeight = '360px'
+        playerContainer.appendChild(iframe)
+      } else if (item.type === 'file') {
+        const video = document.createElement('video')
+        video.src = maybeProxy(item.src)
+        video.controls = true
+        video.autoplay = true
+        video.playsInline = true
+        video.style.width = '100%'
+        video.style.height = '100%'
+        video.style.maxHeight = '80vh'
+        playerContainer.appendChild(video)
+      } else {
+        playerContainer.textContent = '再生できない形式です。'
+      }
+    }
+
+    function maybeProxy(url) {
+      if (useProxyCheckbox.checked) {
+        // NOTE: このサンプルではプロキシのURLは空欄です。
+        // 自分でプロキシ (例: https://your-cors-proxy.example.com/) を用意した場合は下に設定してください。
+        const proxyBase = '' // 例: 'https://your-cors-proxy.example.com/'
+        if (!proxyBase) return url
+        return proxyBase + encodeURIComponent(url)
+      }
+      return url
+    }
+
+    function renderPlaylist() {
+      playlistEl.innerHTML = ''
+      playlist.forEach((it, idx) => {
+        const el = document.createElement('div')
+        el.className = 'item'
+        const left = document.createElement('div')
+        left.innerHTML = `<div>${it.title || ('Item '+(idx+1))}</div><div class='meta'>${it.type} — ${it.url}</div>`
+        const right = document.createElement('div')
+        right.style.display = 'flex'
+        right.style.gap = '6px'
+        const playBtn = document.createElement('button')
+        playBtn.textContent = '▶'
+        playBtn.onclick = () => { createPlayerItem(it) }
+        const removeBtn = document.createElement('button')
+        removeBtn.textContent = '✕'
+        removeBtn.onclick = () => { playlist.splice(idx,1); renderPlaylist(); playerContainer.innerHTML = '<div class="tiny">選択してください</div>' }
+        right.appendChild(playBtn)
+        right.appendChild(removeBtn)
+        el.appendChild(left)
+        el.appendChild(right)
+        playlistEl.appendChild(el)
+      })
+    }
+
+    addBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim()
+      if (!url) return alert('URLを入力してください')
+      const detected = detectType(url)
+      if (!detected) return alert('無効なURLです')
+
+      const item = { url, type: detected.type }
+      if (detected.type === 'youtube' || detected.type === 'vimeo') {
+        item.id = detected.id
+        item.embedUrl = detected.embedUrl
+        item.title = (detected.type === 'youtube' ? 'YouTube:' : 'Vimeo:') + detected.id
+      } else if (detected.type === 'file') {
+        item.src = detected.src
+        item.title = url.split('/').pop()
+      } else {
+        item.src = detected.src
+        item.title = url
+      }
+
+      // push and render + autoplay newly added
+      playlist.unshift(item)
+      renderPlaylist()
+      createPlayerItem(item)
+      urlInput.value = ''
+    })
+
+    // keyboard shortcuts: space = pause/play (for video tag only), n = next
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'KeyN') {
+        // play next (first in playlist)
+        if (playlist.length > 1) createPlayerItem(playlist[0])
+      }
+    })
+
+    // drag & drop to add link
+    document.addEventListener('dragover', e => e.preventDefault())
+    document.addEventListener('drop', e => {
+      e.preventDefault()
+      const text = (e.dataTransfer.getData('text/uri-list') || e.dataTransfer.getData('text/plain')).trim()
+      if (text) {
+        urlInput.value = text
+        addBtn.click()
+      }
+    })
+
+    // small helper: sample links
+    const sampleLinks = [
+      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+      'https://vimeo.com/76979871',
+      'https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4'
+    ]
+    // show samples in playlist area when empty
+    (function showSamples(){
+      if (playlist.length===0) {
+        const guide = document.createElement('div')
+        guide.className = 'tiny'
+        guide.innerHTML = 'サンプルをドラッグ&ドロップ、または次のURLをコピーしてペーストして試してください：<br>' + sampleLinks.map(s=>`<div class="meta">${s}</div>`).join('')
+        playlistEl.appendChild(guide)
+      }
+    })()
+
+  </script>
+</body>
+</html>
